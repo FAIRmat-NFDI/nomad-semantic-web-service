@@ -1,7 +1,14 @@
 import os.path
+from datetime import datetime, timezone
+from types import SimpleNamespace
 
 import structlog
 from nomad.client import normalize_all, parse
+from nomad.datamodel.context import ServerContext
+
+import nomad_semantic_web_service.schema_packages.schema as schema_module
+from nomad_semantic_web_service.catalogue.facilities import FacilityOntology
+from nomad_semantic_web_service.schema_packages.schema import DatasetSearchRequest
 
 
 def test_dataset_search_request_esrfet():
@@ -12,10 +19,20 @@ def test_dataset_search_request_esrfet():
     data = entry_archive.data
     assert data.resolved_technique_term == "https://w3id.org/PaN/ESRFET#XAS"
     assert data.mapping_warning is None
-    # Both 1001 and 1002 carry the XAS technique PID in FAKE_DATASETS.
+    # Both 1001 (FeK_align) and 1002 (DAC6-QMo) carry the XAS technique PID.
     assert len(data.matched_datasets) == 2
-    assert data.matched_datasets[0].name == "ID21 XAS catalyst oxidation-state dataset"
+    assert data.matched_datasets[0].name == "0001"
+    assert data.matched_datasets[0].sample_name == "FeK_align"
     assert data.matched_datasets[0].technique_pids == "https://w3id.org/PaN/ESRFET#XAS"
+    assert data.matched_datasets[0].investigation_name == "IH-HC-3846"
+    assert (
+        data.matched_datasets[0].investigation_title
+        == "High pressure EXAFS study on FeTiO3"
+    )
+    # parse()/normalize_all() run outside ServerContext, so facility ontology
+    # discovery (an outbound HTTP call) is skipped, like the real ICAT+ call.
+    assert data.detected_technique_ontology is None
+    assert data.vocabulary_warning is None
 
 
 def test_dataset_search_request_panet():
@@ -87,3 +104,175 @@ def test_matched_dataset_download_skipped_offline():
     assert matched_dataset.trigger_download is False
     assert matched_dataset.downloaded_folder is None
     assert matched_dataset.downloaded_files is None
+
+
+def test_detect_technique_vocabulary_matches_manual_selection(monkeypatch):
+    monkeypatch.setattr(
+        schema_module,
+        "discover_facility_ontologies",
+        lambda name: [
+            FacilityOntology(
+                name="ESRFET",
+                uri="https://w3id.org/PaN/ESRFET",
+                applies_to=("technique",),
+            )
+        ],
+    )
+
+    request = DatasetSearchRequest(synchrotron="ESRF", vocabulary="ESRFET")
+    request._detect_technique_vocabulary(structlog.get_logger())
+
+    assert request.detected_technique_ontology == "ESRFET"
+    assert request.vocabulary_warning is None
+
+
+def test_detect_technique_vocabulary_mismatch_warns_but_does_not_override(monkeypatch):
+    monkeypatch.setattr(
+        schema_module,
+        "discover_facility_ontologies",
+        lambda name: [
+            FacilityOntology(
+                name="PaNET",
+                uri="http://purl.org/pan-science/PaNET",
+                applies_to=("technique",),
+            )
+        ],
+    )
+
+    request = DatasetSearchRequest(synchrotron="ESRF", vocabulary="ESRFET")
+    request._detect_technique_vocabulary(structlog.get_logger())
+
+    assert request.detected_technique_ontology == "PaNET"
+    # The manual vocabulary selection is never overridden automatically.
+    assert request.vocabulary == "ESRFET"
+    assert "vocabulary is set to ESRFET" in request.vocabulary_warning
+
+
+def test_detect_technique_vocabulary_no_technique_concept_advertised(monkeypatch):
+    monkeypatch.setattr(schema_module, "discover_facility_ontologies", lambda name: [])
+
+    request = DatasetSearchRequest(synchrotron="ESRF", vocabulary="ESRFET")
+    request._detect_technique_vocabulary(structlog.get_logger())
+
+    assert request.detected_technique_ontology is None
+    assert request.vocabulary_warning is None
+
+
+def test_detect_technique_vocabulary_discovery_failure_is_a_warning_not_a_crash(
+    monkeypatch,
+):
+    def raise_network_error(name):
+        raise RuntimeError("network down")
+
+    monkeypatch.setattr(
+        schema_module, "discover_facility_ontologies", raise_network_error
+    )
+
+    request = DatasetSearchRequest(synchrotron="ESRF", vocabulary="ESRFET")
+    request._detect_technique_vocabulary(structlog.get_logger())  # must not raise
+
+    assert request.detected_technique_ontology is None
+    assert request.vocabulary_warning is None
+
+
+def _fake_real_dataset(dataset_id: int, name: str) -> dict:
+    return {
+        "id": dataset_id,
+        "name": name,
+        "startDate": datetime(2021, 3, 18, tzinfo=timezone.utc),
+        "endDate": datetime(2021, 3, 18, tzinfo=timezone.utc),
+        "instrumentName": "ID21",
+        "sampleName": "demo sample",
+    }
+
+
+def test_run_search_require_online_filters_out_archived_matches(monkeypatch):
+    monkeypatch.setattr(
+        schema_module,
+        "fetch_icat_catalogue_datasets",
+        lambda *args, **kwargs: [
+            _fake_real_dataset(1, "online-dataset"),
+            _fake_real_dataset(2, "archived-dataset"),
+        ],
+    )
+    monkeypatch.setattr(
+        schema_module,
+        "get_datasets_status",
+        lambda dataset_ids: {1: "ONLINE", 2: "ARCHIVED"},
+    )
+
+    request = DatasetSearchRequest(
+        synchrotron="ESRF",
+        vocabulary="ESRFET",
+        technique_term="XAS",
+        use_real_icat=True,
+        require_online=True,
+        resolved_technique_term="https://w3id.org/PaN/ESRFET#XAS",
+    )
+    fake_archive = SimpleNamespace(m_context=ServerContext(upload=None))
+    request._run_search(fake_archive, structlog.get_logger())
+
+    assert len(request.matched_datasets) == 1
+    assert request.matched_datasets[0].dataset_id == 1
+    assert request.matched_datasets[0].ids_status == "ONLINE"
+
+
+def test_run_search_without_require_online_keeps_archived_matches_but_flags_them(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        schema_module,
+        "fetch_icat_catalogue_datasets",
+        lambda *args, **kwargs: [
+            _fake_real_dataset(1, "online-dataset"),
+            _fake_real_dataset(2, "archived-dataset"),
+        ],
+    )
+    monkeypatch.setattr(
+        schema_module,
+        "get_datasets_status",
+        lambda dataset_ids: {1: "ONLINE", 2: "ARCHIVED"},
+    )
+
+    request = DatasetSearchRequest(
+        synchrotron="ESRF",
+        vocabulary="ESRFET",
+        technique_term="XAS",
+        use_real_icat=True,
+        require_online=False,
+        resolved_technique_term="https://w3id.org/PaN/ESRFET#XAS",
+    )
+    fake_archive = SimpleNamespace(m_context=ServerContext(upload=None))
+    request._run_search(fake_archive, structlog.get_logger())
+
+    assert len(request.matched_datasets) == 2
+    statuses = {m.dataset_id: m.ids_status for m in request.matched_datasets}
+    assert statuses == {1: "ONLINE", 2: "ARCHIVED"}
+
+
+def test_run_search_require_online_fails_open_when_status_lookup_errors(monkeypatch):
+    monkeypatch.setattr(
+        schema_module,
+        "fetch_icat_catalogue_datasets",
+        lambda *args, **kwargs: [_fake_real_dataset(1, "some-dataset")],
+    )
+
+    def raise_error(dataset_ids):
+        raise RuntimeError("IDS status endpoint down")
+
+    monkeypatch.setattr(schema_module, "get_datasets_status", raise_error)
+
+    request = DatasetSearchRequest(
+        synchrotron="ESRF",
+        vocabulary="ESRFET",
+        technique_term="XAS",
+        use_real_icat=True,
+        require_online=True,
+        resolved_technique_term="https://w3id.org/PaN/ESRFET#XAS",
+    )
+    fake_archive = SimpleNamespace(m_context=ServerContext(upload=None))
+    request._run_search(fake_archive, structlog.get_logger())
+
+    # A failed status lookup must not silently empty out matched_datasets.
+    assert len(request.matched_datasets) == 1
+    assert request.matched_datasets[0].ids_status is None

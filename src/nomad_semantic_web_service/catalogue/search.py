@@ -4,7 +4,6 @@ from datetime import date, datetime
 from typing import Any
 
 from nomad_semantic_web_service.catalogue.demo_data import FAKE_DATASETS
-from nomad_semantic_web_service.catalogue.icat import fetch_icat_public_datasets
 
 # Note: this is the w3id.org IRI used in dataset records, distinct from
 # catalogue.ontology.ESRFET_PURL_PREFIX (the purl.org namespace used internally
@@ -33,6 +32,52 @@ def canonical_technique_pid(technique_pid: str) -> str:
     return technique_pid
 
 
+def resolve_technique_term(term: str, vocabulary: str | None = None) -> dict[str, Any]:
+    """Resolve a user technique term to an ESRFET IRI — the semantic step.
+
+    * ``vocabulary="PANET"`` (or an auto-detected PaNET term) is mapped through
+      the local ESRFET ontology via ``owl:equivalentClass``.
+    * ``vocabulary="ESRFET"`` (or anything else) is normalized directly to the
+      w3id.org ESRFET IRI form used on dataset records.
+
+    When *vocabulary* is ``None`` it is auto-detected: a term that starts with
+    ``PaNET`` (id, CURIE, or PaNET IRI) is treated as PANET, otherwise ESRFET.
+
+    Returns ``{"input", "vocabulary", "resolved_iri", "relation", "mappings",
+    "warning"}``. This is the single implementation shared by the ELN
+    (``DatasetSearchRequest``), the REST layer, and the notebook — none of them
+    should re-inline the map-or-normalize logic.
+    """
+    # Local import: ontology pulls in owlready2/rdflib, which we don't want to
+    # load just by importing this module.
+    from nomad_semantic_web_service.catalogue.ontology import query_panet_to_esrfet
+
+    cleaned = term.strip()
+    if vocabulary is None:
+        vocabulary = "PANET" if cleaned.lower().startswith("panet") else "ESRFET"
+
+    if vocabulary.upper() == "PANET":
+        mappings = query_panet_to_esrfet(cleaned)
+        return {
+            "input": term,
+            "vocabulary": "PANET",
+            "resolved_iri": mappings[0]["targetTerm"] if mappings else None,
+            "relation": mappings[0].get("relation") if mappings else None,
+            "mappings": mappings,
+            "warning": None
+            if mappings
+            else "No ESRFET mapping found for this PANET term.",
+        }
+    return {
+        "input": term,
+        "vocabulary": "ESRFET",
+        "resolved_iri": normalize_esrfet_term(cleaned),
+        "relation": "normalized",
+        "mappings": [],
+        "warning": None,
+    }
+
+
 def parse_technique_pids(technique_pids: str | None) -> set[str]:
     if not technique_pids:
         return set()
@@ -51,6 +96,18 @@ def technique_pids_of(dataset: dict[str, Any]) -> list[str]:
         for technique in dataset.get("techniques", [])
         if technique.get("pid")
     ]
+
+
+def investigation_field(dataset: dict[str, Any], key: str) -> str | None:
+    """Extracts a field from a dataset record's `investigation` sub-object
+    (its ICAT+ proposal/experiment session) - e.g. "name" or "title". Present
+    on real ICAT+ records and on FAKE_DATASETS (which mirrors that shape), but
+    accessed defensively since `investigation` can be absent or malformed."""
+    investigation = dataset.get("investigation")
+    if not isinstance(investigation, dict):
+        return None
+    value = investigation.get(key)
+    return str(value) if value else None
 
 
 def search_local_datasets(
@@ -80,15 +137,7 @@ def search_local_datasets(
     ]
 
 
-def search_icat_datasets(
-    start_date: date | datetime,
-    end_date: date | datetime,
-    technique_pids: str | None,
-    instrument_name: str | None,
-) -> Any:
-    return fetch_icat_public_datasets(
-        start_date=start_date,
-        end_date=end_date,
-        technique_pids=technique_pids,
-        instrument_name=instrument_name,
-    )
+# NOTE: there is deliberately no `search_icat_datasets` wrapper. Real-ICAT
+# search is `catalogue.icat.fetch_icat_catalogue_datasets` called directly
+# (the ELN's real branch and the REST proxy both call it); `search_local_datasets`
+# above is the offline/demo counterpart over FAKE_DATASETS.

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date
 from typing import Annotated, Any
 
 import httpx
@@ -10,15 +10,11 @@ from nomad.config import config
 from pydantic import BaseModel, ConfigDict, Field
 
 from nomad_semantic_web_service.catalogue.icat import (
-    ICAT_PUBLIC_DATASETS_URL,
+    ICAT_DATASETS_URL,
     download_dataset_archive,
+    fetch_icat_catalogue_datasets,
 )
 from nomad_semantic_web_service.catalogue.ontology import query_panet_to_esrfet
-from nomad_semantic_web_service.catalogue.search import (
-    search_icat_datasets,
-    search_local_datasets,
-    technique_pids_of,
-)
 
 ESRFET = "https://w3id.org/PaN/ESRFET#"
 ESRFET_PURL = "http://purl.org/pan-science/ESRFET#"
@@ -29,76 +25,6 @@ XSD = "http://www.w3.org/2001/XMLSchema#"
 DCAT = "http://www.w3.org/ns/dcat#"
 DCTERMS = "http://purl.org/dc/terms/"
 SCHEMA = "https://schema.org/"
-
-
-class Dataset(BaseModel):
-    model_config = ConfigDict(
-        json_schema_extra={
-            "x-semantic-type": DCAT + "Dataset",
-            "x-jsonld-context": {
-                "dcat": DCAT,
-                "dcterms": DCTERMS,
-                "schema": SCHEMA,
-                "esrfet": ESRFET,
-                "time": OWL_TIME,
-                "id": "@id",
-                "name": "dcterms:title",
-                "startDate": {
-                    "@id": SCHEMA + "startDate",
-                    "@type": XSD + "dateTime",
-                },
-                "endDate": {
-                    "@id": SCHEMA + "endDate",
-                    "@type": XSD + "dateTime",
-                },
-                "instrumentName": "schema:instrument",
-                "techniquePids": {
-                    "@id": "esrfet:usesTechnique",
-                    "@type": "@id",
-                },
-                "sampleName": "schema:sampleType",
-            },
-        }
-    )
-
-    id: int = Field(
-        examples=[1001],
-        json_schema_extra={"x-semantic-type": DCTERMS + "identifier"},
-    )
-    name: str = Field(
-        examples=["ID21 XAS catalyst oxidation-state dataset"],
-        json_schema_extra={"x-semantic-type": DCTERMS + "title"},
-    )
-    startDate: datetime = Field(
-        examples=["2024-03-18T09:15:00Z"],
-        json_schema_extra={
-            "x-semantic-type": OWL_TIME + "Instant",
-            "x-datatype": XSD + "dateTime",
-        },
-    )
-    endDate: datetime = Field(
-        examples=["2024-03-18T11:45:00Z"],
-        json_schema_extra={
-            "x-semantic-type": OWL_TIME + "Instant",
-            "x-datatype": XSD + "dateTime",
-        },
-    )
-    instrumentName: str = Field(
-        examples=["ID21"],
-        json_schema_extra={"x-semantic-type": SCHEMA + "instrument"},
-    )
-    techniquePids: list[str] = Field(
-        examples=[["https://w3id.org/PaN/ESRFET#XAS"]],
-        json_schema_extra={
-            "x-semantic-type": ESRFET + "experimental_technique",
-            "x-value-kind": "iri-list",
-            "x-ontology": ESRFET.rstrip("#"),
-        },
-    )
-    sampleName: str = Field(
-        examples=["lysozyme microcrystals"],
-        json_schema_extra={"x-semantic-type": SCHEMA + "sampleType"},
-    )
 
 
 class MappingResult(BaseModel):
@@ -161,136 +87,99 @@ app = FastAPI(
 
 
 @app.get(
-    "/catalogue/public/datasets",
-    response_model=list[Dataset],
-    tags=["Catalogue"],
-    summary="Returns public datasets",
-    description="Returns public datasets filtered by date range, technique, and instrument.",
-    operation_id="get_catalogue_public_datasets",
-)
-def get_public_datasets(
-    startDate: Annotated[
-        datetime,
-        Query(
-            description="Start date, ISO 8601 date-time.",
-            examples=["2024-01-01T00:00:00Z"],
-        ),
-    ],
-    endDate: Annotated[
-        datetime,
-        Query(
-            description="End date, ISO 8601 date-time.",
-            examples=["2024-12-31T23:59:59Z"],
-        ),
-    ],
-    techniquePids: Annotated[
-        str | None,
-        Query(
-            description="Technique PIDs used to filter datasets, comma-separated.",
-            examples=["https://w3id.org/PaN/ESRFET#XAS"],
-        ),
-    ] = None,
-    instrumentName: Annotated[
-        str | None,
-        Query(
-            description="Name of the beamline or instrument.",
-            examples=["ID21"],
-        ),
-    ] = None,
-) -> list[dict[str, Any]]:
-    datasets = search_local_datasets(startDate, endDate, techniquePids, instrumentName)
-    return [
-        {
-            "id": dataset["id"],
-            "name": dataset["name"],
-            "startDate": dataset["startDate"],
-            "endDate": dataset["endDate"],
-            "instrumentName": dataset["instrumentName"],
-            "techniquePids": technique_pids_of(dataset),
-            "sampleName": dataset["sampleName"],
-        }
-        for dataset in datasets
-    ]
-
-
-@app.get(
-    "/icat/catalogue/public/datasets",
+    "/catalogue/datasets",
     response_model=None,
-    tags=["ICAT Proxy"],
-    summary="Returns public datasets from the real ESRF ICAT+ endpoint",
+    tags=["Catalogue"],
+    summary="List public datasets from the real ESRF ICAT+ catalogue",
     description=(
-        "Forwards only startDate, endDate, techniquePids, and instrumentName "
-        "to the real ESRF ICAT+ /catalogue/public/datasets endpoint."
+        "Proxies the real ESRF ICAT+ `GET /catalogue/datasets` route (the only "
+        "catalogue-listing path that exists on icatplus.esrf.fr), forwarding "
+        "`startDate`, `endDate`, and `instrumentName`. Anonymous — public "
+        "datasets need no credentials.\n\n"
+        "ICAT+ documents a `techniquePids` filter on this route and applies it "
+        "server-side, so it is forwarded when given. Note it only matches "
+        "datasets annotated with technique PIDs; public records currently "
+        "mostly carry an empty `techniques[]`, so a technique filter returns "
+        "nothing for them and callers narrow by beamline instead."
     ),
-    operation_id="get_real_icat_public_datasets",
+    operation_id="get_catalogue_datasets",
 )
-def get_real_icat_public_datasets(
+def get_catalogue_datasets(
     startDate: Annotated[
         date,
         Query(
             description="Start date forwarded to ICAT+ in YYYY-MM-DD format.",
-            examples=["2024-01-01"],
+            examples=["2023-02-09"],
         ),
     ],
     endDate: Annotated[
         date,
         Query(
             description="End date forwarded to ICAT+ in YYYY-MM-DD format.",
-            examples=["2024-12-31"],
+            examples=["2023-02-13"],
         ),
     ],
-    techniquePids: Annotated[
-        str | None,
-        Query(
-            description="Technique PIDs forwarded to ICAT+, comma-separated.",
-            examples=["https://w3id.org/PaN/ESRFET#XAS"],
-        ),
-    ] = None,
     instrumentName: Annotated[
         str | None,
         Query(
             description="Beamline or instrument name forwarded to ICAT+.",
-            examples=["ID21"],
+            examples=["BM23"],
+        ),
+    ] = None,
+    techniquePids: Annotated[
+        str | None,
+        Query(
+            description=(
+                "Technique PID(s) forwarded to ICAT+'s server-side "
+                "`techniquePids` filter. Only matches datasets annotated with "
+                "technique PIDs (public BM23 data currently has none)."
+            ),
+            examples=["https://w3id.org/PaN/ESRFET#XAS"],
         ),
     ] = None,
 ) -> Any:
     try:
-        return search_icat_datasets(startDate, endDate, techniquePids, instrumentName)
+        return fetch_icat_catalogue_datasets(
+            start_date=startDate,
+            end_date=endDate,
+            instrument_name=instrumentName,
+            technique_pids=techniquePids,
+        )
     except httpx.HTTPStatusError as exc:
         raise HTTPException(
             status_code=exc.response.status_code,
-            detail={
-                "upstream": ICAT_PUBLIC_DATASETS_URL,
-                "message": exc.response.text,
-            },
+            detail={"upstream": ICAT_DATASETS_URL, "message": exc.response.text},
         ) from exc
     except httpx.HTTPError as exc:
         raise HTTPException(
             status_code=502,
-            detail={
-                "upstream": ICAT_PUBLIC_DATASETS_URL,
-                "message": str(exc),
-            },
+            detail={"upstream": ICAT_DATASETS_URL, "message": str(exc)},
         ) from exc
 
 
 @app.get(
-    "/catalogue/public/datasets/{dataset_id}/download",
-    tags=["ICAT Proxy"],
-    summary="Downloads a public dataset as a zip archive",
+    "/ids/data/download",
+    tags=["Catalogue"],
+    summary="Download a public dataset as a zip archive",
     description=(
-        "Downloads a dataset anonymously from ICAT+ as a zip archive. ICAT+ "
-        "issues an anonymous session for public datasets; no authentication "
-        "is required. Optionally filter to only files with the given "
-        "extensions (e.g. 'h5,edf'). There is no separate file-format filter "
-        "on the whole-dataset download itself: filtering is done by listing "
-        "the dataset's individual files first and downloading only the "
-        "matching ones."
+        "Proxies the real ESRF IDS `GET /ids/data/download` route (which exists "
+        "on icatplus.esrf.fr), downloading a dataset anonymously as a zip. "
+        "ICAT+ issues an anonymous session for public datasets; no credentials "
+        "needed. Optionally filter to only files with the given extensions "
+        "(e.g. 'h5,edf') — done by listing the dataset's files first and "
+        "downloading only the matching ones, since IDS itself has no "
+        "format parameter."
     ),
-    operation_id="download_catalogue_public_dataset",
+    operation_id="download_dataset",
 )
-def download_public_dataset(
-    dataset_id: int,
+def download_dataset(
+    datasetIds: Annotated[
+        int,
+        Query(
+            description="ICAT+ dataset id to download.",
+            examples=[1071092451],
+        ),
+    ],
     fileExtensions: Annotated[
         str | None,
         Query(
@@ -305,7 +194,7 @@ def download_public_dataset(
         else None
     )
     try:
-        content = download_dataset_archive(dataset_id, file_extensions=extensions)
+        content = download_dataset_archive(datasetIds, file_extensions=extensions)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except httpx.HTTPStatusError as exc:
@@ -319,7 +208,7 @@ def download_public_dataset(
         content=content,
         media_type="application/zip",
         headers={
-            "Content-Disposition": f'attachment; filename="dataset-{dataset_id}.zip"'
+            "Content-Disposition": f'attachment; filename="dataset-{datasetIds}.zip"'
         },
     )
 
@@ -393,9 +282,10 @@ def add_semantic_annotations(openapi_schema: dict) -> dict:
         "schema.org": SCHEMA.rstrip("/"),
     }
 
-    operation = openapi_schema["paths"]["/catalogue/public/datasets"]["get"]
+    operation = openapi_schema["paths"]["/catalogue/datasets"]["get"]
     operation["x-semantic-operation"] = {
         "type": DCAT + "DataService",
+        "upstream": ICAT_DATASETS_URL,
         "returns": DCAT + "Dataset",
         "supportedOntologies": ["ESRFET", "OWL-Time", "XSD", "DCAT", "schema.org"],
     }
@@ -411,12 +301,12 @@ def add_semantic_annotations(openapi_schema: dict) -> dict:
     parameter_annotations = {
         "startDate": {
             "x-semantic-type": OWL_TIME + "Instant",
-            "x-datatype": XSD + "dateTime",
+            "x-datatype": XSD + "date",
             "x-jsonld-property": SCHEMA + "startDate",
         },
         "endDate": {
             "x-semantic-type": OWL_TIME + "Instant",
-            "x-datatype": XSD + "dateTime",
+            "x-datatype": XSD + "date",
             "x-jsonld-property": SCHEMA + "endDate",
         },
         "techniquePids": {
@@ -433,36 +323,6 @@ def add_semantic_annotations(openapi_schema: dict) -> dict:
 
     for parameter in operation.get("parameters", []):
         parameter.update(parameter_annotations.get(parameter["name"], {}))
-
-    icat_operation = openapi_schema["paths"]["/icat/catalogue/public/datasets"]["get"]
-    icat_operation["x-semantic-operation"] = {
-        "type": DCAT + "DataService",
-        "upstream": ICAT_PUBLIC_DATASETS_URL,
-        "forwardsOnlyQueryParameters": [
-            "startDate",
-            "endDate",
-            "techniquePids",
-            "instrumentName",
-        ],
-        "returns": DCAT + "Dataset",
-        "supportedOntologies": ["ESRFET", "OWL-Time", "XSD", "DCAT", "schema.org"],
-    }
-    icat_operation["x-jsonld-context"] = operation["x-jsonld-context"]
-    icat_parameter_annotations = {
-        **parameter_annotations,
-        "startDate": {
-            "x-semantic-type": OWL_TIME + "Instant",
-            "x-datatype": XSD + "date",
-            "x-jsonld-property": SCHEMA + "startDate",
-        },
-        "endDate": {
-            "x-semantic-type": OWL_TIME + "Instant",
-            "x-datatype": XSD + "date",
-            "x-jsonld-property": SCHEMA + "endDate",
-        },
-    }
-    for parameter in icat_operation.get("parameters", []):
-        parameter.update(icat_parameter_annotations.get(parameter["name"], {}))
 
     mapping_operation = openapi_schema["paths"]["/map"]["get"]
     mapping_operation["x-semantic-operation"] = {

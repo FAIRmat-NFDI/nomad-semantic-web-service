@@ -4,14 +4,15 @@ import re
 import zipfile
 from datetime import date, datetime, timezone
 from io import BytesIO
+from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 import httpx
 
 ICAT_BASE_URL = "https://icatplus.esrf.fr"
-ICAT_PUBLIC_DATASETS_PATH = "/catalogue/public/datasets"
-ICAT_PUBLIC_DATASETS_URL = ICAT_BASE_URL + ICAT_PUBLIC_DATASETS_PATH
+ICAT_DATASETS_PATH = "/catalogue/datasets"
+ICAT_DATASETS_URL = ICAT_BASE_URL + ICAT_DATASETS_PATH
 IDS_DOWNLOAD_URL = ICAT_BASE_URL + "/ids/data/download"
 
 
@@ -28,23 +29,6 @@ def serialize_datetime_for_query(value: datetime) -> str:
     return serialized
 
 
-def build_icat_public_dataset_params(
-    start_date: date | datetime,
-    end_date: date | datetime,
-    technique_pids: str | None,
-    instrument_name: str | None,
-) -> dict[str, str]:
-    params = {
-        "startDate": serialize_date_for_icat_query(start_date),
-        "endDate": serialize_date_for_icat_query(end_date),
-    }
-    if technique_pids:
-        params["techniquePids"] = technique_pids
-    if instrument_name:
-        params["instrumentName"] = instrument_name
-    return params
-
-
 def landing_page_for_dataset(dataset: dict[str, Any]) -> str | None:
     """Resolves a public landing-page URL for a real ICAT+ dataset record.
 
@@ -58,28 +42,64 @@ def landing_page_for_dataset(dataset: dict[str, Any]) -> str | None:
     return f"https://doi.org/{doi}" if doi else None
 
 
-def fetch_icat_public_datasets(
+def build_icat_catalogue_dataset_params(
     start_date: date | datetime,
     end_date: date | datetime,
+    instrument_name: str | None,
     technique_pids: str | None = None,
+    limit: int = 100,
+) -> dict[str, str]:
+    params = {
+        "startDate": serialize_date_for_icat_query(start_date),
+        "endDate": serialize_date_for_icat_query(end_date),
+        "limit": str(limit),
+        "sortBy": "STARTDATE",
+        "sortOrder": "1",
+    }
+    if instrument_name:
+        params["instrumentName"] = instrument_name
+    if technique_pids:
+        params["techniquePids"] = technique_pids
+    return params
+
+
+def fetch_icat_catalogue_datasets(  # noqa: PLR0913, PLR0917
+    start_date: date | datetime,
+    end_date: date | datetime,
     instrument_name: str | None = None,
+    technique_pids: str | None = None,
+    limit: int = 100,
     client: httpx.Client | None = None,
-) -> Any:
+) -> list[dict[str, Any]]:
+    """Lists real ICAT+ datasets from `GET /catalogue/datasets` (the catalogue
+    listing route that actually exists on icatplus.esrf.fr).
+
+    Filters by date range, instrument, and optionally `technique_pids`: the
+    route documents a `techniquePids` filter (in swagger.json) and applies it
+    server-side. It only matches datasets that are annotated with technique
+    PIDs, though - public BM23 records currently have an empty `techniques[]`,
+    so a technique filter returns nothing for them and callers narrow by
+    beamline instead (see the demonstrator's ESRF_ICAT.md). The separate
+    `/catalogue/public/datasets` route does not exist on the live server (404,
+    undocumented) and is not used.
+    """
     close_client = client is None
     client = client or httpx.Client(timeout=30)
     try:
         response = client.get(
-            ICAT_PUBLIC_DATASETS_URL,
-            params=build_icat_public_dataset_params(
+            ICAT_DATASETS_URL,
+            params=build_icat_catalogue_dataset_params(
                 start_date=start_date,
                 end_date=end_date,
-                technique_pids=technique_pids,
                 instrument_name=instrument_name,
+                technique_pids=technique_pids,
+                limit=limit,
             ),
             headers={"accept": "application/json"},
         )
         response.raise_for_status()
-        return response.json()
+        payload = response.json()
+        return payload if isinstance(payload, list) else []
     finally:
         if close_client:
             client.close()
@@ -109,6 +129,78 @@ def get_anonymous_session_id(dataset_id: int, client: httpx.Client) -> str:
             f"Could not obtain an anonymous ICAT+ session (status {response.status_code})."
         )
     return session_ids[0]
+
+
+class DatasetNotOnlineError(Exception):
+    """Raised when a dataset's files are archived (e.g. on tape) rather than
+    immediately downloadable. ICAT+'s IDS backend restores archived datasets
+    on request, but that is asynchronous - it was empirically observed to
+    still take longer than 40s after both a plain download attempt (whose own
+    error claims restoration is "requested automatically") and an explicit
+    `POST .../datasets/restore`. There is no synchronous way to wait this out
+    within a single request; callers should surface `status` to the user and
+    let them retry later, not treat this as a transient/generic failure.
+    """
+
+    def __init__(self, dataset_id: int, status: str):
+        self.dataset_id = dataset_id
+        self.status = status
+        super().__init__(
+            f"Dataset {dataset_id} is not online (status: {status}). A "
+            "restore has been requested; tape-archived data can take "
+            "minutes to hours to become downloadable - retry later."
+        )
+
+
+def get_dataset_status(dataset_id: int, session_id: str, client: httpx.Client) -> str:
+    """Returns a single dataset's IDS status (e.g. "ONLINE", "ARCHIVED",
+    "RESTORING")."""
+    response = client.get(
+        f"{ICAT_BASE_URL}/ids/{session_id}/datasets/status",
+        params={"datasetIds": str(dataset_id)},
+    )
+    response.raise_for_status()
+    statuses = response.json()
+    return statuses[0] if statuses else "UNKNOWN"
+
+
+def get_datasets_status(
+    dataset_ids: list[int], client: httpx.Client | None = None
+) -> dict[int, str]:
+    """Returns IDS status for several datasets in one request. Mints its own
+    anonymous session (against the first id - sessions aren't dataset-scoped)
+    since this is meant to annotate search results, not extend an
+    already-open download flow (see get_dataset_status() for that case)."""
+    if not dataset_ids:
+        return {}
+    close_client = client is None
+    client = client or httpx.Client(timeout=30)
+    try:
+        session_id = get_anonymous_session_id(dataset_ids[0], client=client)
+        response = client.get(
+            f"{ICAT_BASE_URL}/ids/{session_id}/datasets/status",
+            params={"datasetIds": ",".join(str(i) for i in dataset_ids)},
+        )
+        response.raise_for_status()
+        return dict(zip(dataset_ids, response.json()))
+    finally:
+        if close_client:
+            client.close()
+
+
+def request_dataset_restore(
+    dataset_id: int, session_id: str, client: httpx.Client
+) -> None:
+    """Queues an IDS restore for an archived dataset. Fire-and-forget: IDS
+    responds immediately (redirecting to where the eventual download will
+    land) without waiting for the actual tape restoration - see
+    DatasetNotOnlineError's docstring for why callers can't just wait here."""
+    client.post(
+        f"{ICAT_BASE_URL}/ids/{session_id}/datasets/restore",
+        params={"datasetIds": str(dataset_id)},
+        json={"name": "anonymous", "email": "anonymous@nomad-oasis"},
+        follow_redirects=False,
+    )
 
 
 def list_datafiles(
@@ -141,14 +233,22 @@ def download_dataset_archive(
     If `file_extensions` is given (e.g. `["h5", "edf"]`), only datafiles whose
     name ends with one of them (case-insensitive) are included; otherwise the
     whole dataset is downloaded. Raises `ValueError` if a filter matches no
-    files.
+    files, or `DatasetNotOnlineError` if the dataset is archived rather than
+    immediately downloadable (confirmed empirically: real ICAT+ archives
+    older public datasets to tape and 404s `GET .../data/download` for them
+    with `DataNotOnlineException` until restored).
     """
     close_client = client is None
     client = client or httpx.Client(timeout=120)
     try:
+        session_id = get_anonymous_session_id(dataset_id, client=client)
+        status = get_dataset_status(dataset_id, session_id, client=client)
+        if status != "ONLINE":
+            request_dataset_restore(dataset_id, session_id, client=client)
+            raise DatasetNotOnlineError(dataset_id, status)
+
         if file_extensions:
             extensions = {ext.lower().lstrip(".") for ext in file_extensions}
-            session_id = get_anonymous_session_id(dataset_id, client=client)
             datafiles = list_datafiles(dataset_id, session_id, client=client)
             datafile_ids = [
                 datafile["id"]
@@ -176,6 +276,34 @@ def download_dataset_archive(
     finally:
         if close_client:
             client.close()
+
+
+def download_and_extract(
+    dataset_id: int,
+    dest_dir: Path,
+    file_extensions: list[str] | None = None,
+    client: httpx.Client | None = None,
+) -> list[Path]:
+    """Download a public dataset and extract its files to *dest_dir* on disk.
+
+    The on-disk counterpart to ``download_dataset_archive`` (which returns zip
+    bytes): downloads anonymously — optionally filtered to *file_extensions*
+    (e.g. ``["h5"]``) — extracts each regular member (names normalized via
+    ``normalize_zip_member_name``), and returns the written file paths. Raises
+    ``DatasetNotOnlineError`` for tape-archived datasets, same as
+    ``download_dataset_archive``.
+    """
+    dest_dir = Path(dest_dir)
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    content = download_dataset_archive(
+        dataset_id, file_extensions=file_extensions, client=client
+    )
+    written: list[Path] = []
+    for member_name, data in extract_zip_members(content):
+        out = dest_dir / Path(member_name).name
+        out.write_bytes(data)
+        written.append(out)
+    return written
 
 
 def normalize_zip_member_name(name: str) -> str:
