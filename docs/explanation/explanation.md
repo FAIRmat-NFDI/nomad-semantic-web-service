@@ -38,34 +38,40 @@ back into the same entry — there is no separate "run" button. Two ingredients
 are worth understanding:
 
 - **The semantic step.** A technique term is resolved to an ESRFET IRI: a PANET
-  term is mapped through the local `ESRFET.owl` ontology (`owl:equivalentClass`),
-  an ESRFET term is normalised directly. This resolved IRI is what the search
-  and the annotated API expose as the "findable-via-semantics" result. (Two
-  ESRFET namespaces exist — the published `w3id.org` form used on dataset
-  records and the `purl.org` form used inside the ontology — and the plugin
-  converts between them so a mapping result can be matched against records.)
-- **Real vs. offline.** With `use_real_icat` off, the search runs against a local
-  demo fixture; with it on (and only in a server context), it queries the live
-  ESRF ICAT+. The offline fixture is shaped and valued like real BM23 (ESRF's
-  EXAFS beamline) records — same `techniques`/`investigation`/DOI structure — so
-  no code needs to branch on which source it came from.
+  term is mapped through the local `ESRFET.owl` ontology via its
+  `owl:equivalentClass` relations, an ESRFET term is normalised directly. This
+  resolved IRI is what the search and the annotated API expose as the
+  "findable-via-semantics" result. (Two ESRFET namespaces exist — the published
+  `w3id.org` form used on dataset records and the `purl.org` form used inside
+  the ontology — and the plugin converts between them so a mapping result can be
+  matched against records.) The mapping walks rdflib triples directly rather
+  than issuing a SPARQL query — see the note on `pyparsing` below.
+- **Real vs. offline.** With `use_real_icat` on (the default, and only in a
+  server context) the search queries the live ESRF ICAT+; turn it off to run
+  against a local demo fixture. The offline fixture mirrors the real
+  `techniques`/`investigation`/DOI record structure, so no code needs to branch
+  on which source it came from.
 
-## Technique filtering is supported by ICAT+, but the data isn't annotated
+## Technique filtering, server-side
 
 The live `/catalogue/datasets` route accepts a server-side `techniquePids`
-filter, and the plugin forwards it. The practical catch is data, not the API:
-public BM23 records currently carry an empty `techniques` list, so a technique
-filter matches nothing for them. The demonstrator therefore narrows by
-**beamline** (BM23) as the XAS proxy while still surfacing the resolved ESRFET
-term. Once ESRF annotates the records, the same call filters by technique with
-no change. (See the demonstrator's `ESRF_ICAT.md` for the empirical write-up.)
+filter, and the plugin forwards the resolved ESRFET IRI. This is what makes the
+demonstrator target **ID21**: its public XAS datasets *are* annotated with the
+technique PID, so the resolved `ESRFET#XAS` IRI filters them server-side. Not all
+beamlines are annotated — public BM23 records, for instance, carry an empty
+`techniques` list and would need narrowing by beamline instead. Results are
+returned newest-first, so the first match uses the current export convention.
+(See the demonstrator's `ESRF_ICAT.md` for the empirical write-up.)
 
 ## Anonymous, format-filtered download — and the tape problem
 
 Public ESRF datasets download **without authentication**: ICAT+ issues an
 anonymous session and the IDS backend serves the files. Downloads can be
 restricted to specific file extensions (default `h5`), since whole datasets can
-be far larger than the handful of files actually needed.
+be far larger than the handful of files actually needed. IDS returns a zip when
+several files are requested but the **raw file itself** when exactly one
+datafile matches (e.g. a single-`.h5` ID21 dataset); the plugin detects the zip
+magic bytes and handles both.
 
 Public data more than a few years past embargo is often migrated to **tape**.
 Such a dataset can't be downloaded immediately — it must be restored first, and
@@ -106,6 +112,10 @@ convert, it is skipped with a warning and the download itself is unaffected.
 - **Facility discovery informs but never overrides.** The plugin asks ESRF which
   vocabulary it advertises for techniques and records it, but never rewrites the
   user's manual `vocabulary` choice — a mismatch only raises a warning.
-- **`pyparsing<3` pin.** The ontology SPARQL queries need it because `nomad-lab`
-  pins `rdflib==5` workspace-wide, whose SPARQL parser breaks with newer
-  `pyparsing`.
+- **No `pyparsing` pin; the ontology mapping avoids SPARQL.** `nomad-lab`'s
+  environment resolves `pyparsing>=3` (matplotlib requires it), and `rdflib` 5's
+  SPARQL parser breaks under `pyparsing>=3`. Rather than pin `pyparsing<3` (which
+  would make the plugin un-installable alongside `nomad-lab` in a NOMAD Oasis),
+  the PANET→ESRFET mapping navigates rdflib triples (`graph.objects`/`subjects`
+  over `owl:equivalentClass`) directly, which has no SPARQL/`pyparsing`
+  dependency.

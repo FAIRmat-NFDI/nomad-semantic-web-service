@@ -17,15 +17,17 @@ The routes mirror the real ESRF ICAT+ paths (`/catalogue/datasets`,
 ```bash
 curl 'http://localhost:8000/nomad-oasis/semantic-web-service/health'
 
-# List real ESRF datasets by date + beamline (proxies ICAT+ /catalogue/datasets).
-# techniquePids is forwarded too, but public BM23 data isn't annotated yet, so
-# it returns nothing — narrow by beamline instead (see ESRF_ICAT notes).
-curl 'http://localhost:8000/nomad-oasis/semantic-web-service/catalogue/datasets?startDate=2023-02-09&endDate=2023-02-13&instrumentName=BM23'
+# List real ESRF datasets by date, beamline, and technique (proxies ICAT+
+# /catalogue/datasets). ID21's public XAS datasets ARE annotated with the
+# technique PID, so techniquePids filters them server-side.
+curl 'http://localhost:8000/nomad-oasis/semantic-web-service/catalogue/datasets?startDate=2021-01-01&endDate=2022-12-31&instrumentName=ID21&techniquePids=https://w3id.org/PaN/ESRFET%23XAS'
 
 curl 'http://localhost:8000/nomad-oasis/semantic-web-service/map?term=PaNET01196&source=PANET&target=ESRFET'
 
-# Download a real public dataset anonymously, optionally filtered by file extension:
-curl 'http://localhost:8000/nomad-oasis/semantic-web-service/ids/data/download?datasetIds=1071092451&fileExtensions=h5' -o dataset.zip
+# Download a real public dataset anonymously, optionally filtered by file extension.
+# ID21 datasets hold a single .h5, which IDS returns as the raw file (not a zip);
+# multi-file datasets come back as a zip.
+curl 'http://localhost:8000/nomad-oasis/semantic-web-service/ids/data/download?datasetIds=874478618&fileExtensions=h5' -o dataset_or_file.bin
 ```
 
 See the [reference](../reference/references.md) for all routes, or open
@@ -34,9 +36,12 @@ See the [reference](../reference/references.md) for all routes, or open
 ## Using the ELN schema
 
 1. In the NOMAD GUI, create a new entry of type **Dataset search request**.
-2. Fill in `synchrotron` (only `ESRF` is currently wired to a live endpoint),
-   `vocabulary` (`ESRFET` or `PANET`), `technique_term`, `start_date`, `end_date`,
-   and optionally `instrument_name`.
+2. The defaults already target the OSCARS demonstrator source — `synchrotron`
+   `ESRF`, `vocabulary` `ESRFET`, `technique_term` `XAS`, `instrument_name`
+   `ID21`, the 2021–2022 window, and `use_real_icat` on — so simply saving runs
+   a live ID21 XAS search. Adjust any of these (e.g. set `vocabulary` `PANET`
+   and `technique_term` `PaNET01196`, or a different `instrument_name`) as
+   needed.
 3. Save the entry. `resolved_technique_term` is resolved (after PANET→ESRFET
    mapping, if applicable) and the search runs automatically in the same save —
    `matched_datasets` is populated immediately, including a DOI-based
@@ -47,8 +52,9 @@ See the [reference](../reference/references.md) for all routes, or open
    save also checks the facility's advertised technique vocabulary
    (`detected_technique_ontology`) and flags a `vocabulary_warning` if it
    disagrees with your `vocabulary` selection, without changing it.
-4. Toggle `use_real_icat` to query the real ESRF ICAT+ endpoint instead of the
-   local demo data (requires network access to `icatplus.esrf.fr`). Each real
+4. `use_real_icat` (on by default) queries the real ESRF ICAT+ endpoint instead
+   of the local demo data (requires network access to `icatplus.esrf.fr`); turn
+   it off to explore the bundled demo catalogue offline. Each real
    match's `ids_status` (`ONLINE`/`ARCHIVED`/`RESTORING`/...) is filled in at
    the same time — real ICAT+ archives older public datasets to tape, and
    only `ONLINE` ones download immediately. Toggle `require_online` to drop
