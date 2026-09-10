@@ -39,7 +39,7 @@ Repository = "https://github.com/FAIRmat-NFDI/nomad-semantic-web-service"
 [project.optional-dependencies]
 # Enables auto-conversion of downloaded ESRF .h5 files into NXxas entries.
 nexus = [
-    "pynxtools-xas>=0.1.1",
+    "pynxtools-xas>=0.1.0",
 ]
 dev = [
     "ruff",
