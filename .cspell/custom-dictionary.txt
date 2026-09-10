@@ -20,6 +20,7 @@ TOMO
 addopts
 autoconvert
 beamline
+beamlines
 beamtimes
 behaviour
 browsable

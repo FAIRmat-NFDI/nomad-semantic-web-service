@@ -52,7 +52,7 @@ _H5_SUFFIXES = (".h5", ".hdf5")
 def convert_h5_bytes_to_nxxas(
     h5_bytes: bytes,
     *,
-    nxdl: str = "NXxas_trans",
+    nxdl: str = "NXxas",
     stem: str = "dataset",
 ) -> bytes:
     """Convert raw HDF5 bytes to NXxas ``.nxs`` bytes via the pynxtools-xas reader.
@@ -85,7 +85,7 @@ def autoconvert_downloaded_h5(
     folder: str,
     extracted_files: list[str],
     *,
-    nxdl: str = "NXxas_trans",
+    nxdl: str = "NXxas",
 ) -> list[str]:
     """Convert each downloaded ``.h5`` under *folder* to a sibling NXxas ``.nxs``.
 

@@ -12,8 +12,7 @@ from nomad_semantic_web_service.catalogue.facilities import (
 )
 from nomad_semantic_web_service.catalogue.icat import (
     DatasetNotOnlineError,
-    download_dataset_archive,
-    extract_zip_members,
+    download_datafiles,
     fetch_icat_catalogue_datasets,
     get_datasets_status,
     landing_page_for_dataset,
@@ -165,14 +164,12 @@ class MatchedDataset(ArchiveSection):
                 if self.file_extensions_filter
                 else None
             )
-            content = download_dataset_archive(
-                self.dataset_id, file_extensions=extensions
-            )
+            members = download_datafiles(self.dataset_id, file_extensions=extensions)
             folder = f"dataset-{self.dataset_id}"
             archive.m_context.upload_files.raw_create_directory(folder)
 
             extracted = []
-            for member_name, data in extract_zip_members(content):
+            for member_name, data in members:
                 member_dir = "/".join(member_name.split("/")[:-1])
                 if member_dir:
                     archive.m_context.upload_files.raw_create_directory(
@@ -254,10 +251,11 @@ class DatasetSearchRequest(Schema):
     )
     technique_term = Quantity(
         type=str,
+        default="XAS",
         description=(
             "Technique term, IRI, or compact curie. For vocabulary=ESRFET, e.g. "
             '"XAS" or "ESRFET:XAS". For vocabulary=PANET, e.g. "PaNET01196" or '
-            '"PaNET:PaNET01196".'
+            '"PaNET:PaNET01196". Defaults to XAS, the OSCARS demonstrator target.'
         ),
         a_eln=ELNAnnotation(component=ELNComponentEnum.StringEditQuantity),
     )
@@ -275,15 +273,23 @@ class DatasetSearchRequest(Schema):
     )
     instrument_name = Quantity(
         type=str,
-        description="Optional beamline or instrument name to filter by.",
+        default="ID21",
+        description=(
+            "Beamline or instrument name to filter by. Defaults to ID21, whose "
+            "public datasets are annotated with the XAS technique and kept on "
+            "disk (the OSCARS demonstrator source; ESRF's tape-archived EXAFS "
+            "beamlines are not reliably restorable on demand)."
+        ),
         a_eln=ELNAnnotation(component=ELNComponentEnum.StringEditQuantity),
     )
     use_real_icat = Quantity(
         type=bool,
-        default=False,
+        default=True,
         description=(
             "If set, search the real ESRF ICAT+ public datasets endpoint instead "
-            "of the local demo data. Requires network access to icatplus.esrf.fr."
+            "of the local demo data. Requires network access to icatplus.esrf.fr. "
+            "Defaults to True for the OSCARS demonstrator; set False to explore "
+            "against the bundled demo catalogue offline."
         ),
         a_eln=ELNAnnotation(component=ELNComponentEnum.BoolEditQuantity),
     )

@@ -54,7 +54,10 @@ def build_icat_catalogue_dataset_params(
         "endDate": serialize_date_for_icat_query(end_date),
         "limit": str(limit),
         "sortBy": "STARTDATE",
-        "sortOrder": "1",
+        # Newest datasets first (sortOrder "-1" descending). Recent beamtimes use
+        # the current export conventions, so the first results are the most
+        # likely to convert cleanly; older exports can differ.
+        "sortOrder": "-1",
     }
     if instrument_name:
         params["instrumentName"] = instrument_name
@@ -278,6 +281,77 @@ def download_dataset_archive(
             client.close()
 
 
+def looks_like_zip(content: bytes) -> bool:
+    """True if *content* starts with the ZIP local-file-header magic ``PK\\x03\\x04``."""
+    return content[:4] == b"PK\x03\x04"
+
+
+def download_datafiles(
+    dataset_id: int,
+    file_extensions: list[str] | None = None,
+    client: httpx.Client | None = None,
+) -> list[tuple[str, bytes]]:
+    """Download a public dataset's files and return ``(name, bytes)`` pairs.
+
+    The canonical download primitive used by both the ELN schema and the
+    on-disk ``download_and_extract``. Anonymous, optionally filtered to
+    *file_extensions* (e.g. ``["h5"]``). Raises ``DatasetNotOnlineError`` for
+    tape-archived datasets and ``ValueError`` if a filter matches nothing.
+
+    IDS returns a **zip** when the whole dataset (or several files) is
+    requested, but the **raw file itself** when exactly one datafile id is
+    requested (e.g. an ID21 dataset holding a single ``.h5``). This handles
+    both: a zip is unpacked via ``extract_zip_members``; a raw single-file
+    response is paired with the name of the one datafile requested.
+    """
+    close_client = client is None
+    client = client or httpx.Client(timeout=120)
+    try:
+        session_id = get_anonymous_session_id(dataset_id, client=client)
+        status = get_dataset_status(dataset_id, session_id, client=client)
+        if status != "ONLINE":
+            request_dataset_restore(dataset_id, session_id, client=client)
+            raise DatasetNotOnlineError(dataset_id, status)
+
+        datafiles = list_datafiles(dataset_id, session_id, client=client)
+        if file_extensions:
+            extensions = {ext.lower().lstrip(".") for ext in file_extensions}
+            selected = [
+                datafile
+                for datafile in datafiles
+                if matches_file_extensions(datafile, extensions)
+            ]
+            if not selected:
+                raise ValueError(
+                    f"No datafiles in dataset {dataset_id} match extensions "
+                    f"{sorted(extensions)}."
+                )
+            params = {
+                "datafileIds": ",".join(str(f["id"]) for f in selected),
+                "inline": "false",
+            }
+        else:
+            selected = datafiles
+            params = {"datasetIds": str(dataset_id), "inline": "false"}
+
+        response = client.get(IDS_DOWNLOAD_URL, params=params, follow_redirects=True)
+        response.raise_for_status()
+        content = response.content
+
+        if looks_like_zip(content):
+            return extract_zip_members(content)
+        # Single-file (raw) response: name it after the one requested datafile.
+        name = (
+            selected[0].get("name")
+            if len(selected) == 1
+            else f"dataset-{dataset_id}.bin"
+        )
+        return [(normalize_zip_member_name(str(name)), content)]
+    finally:
+        if close_client:
+            client.close()
+
+
 def download_and_extract(
     dataset_id: int,
     dest_dir: Path,
@@ -286,20 +360,16 @@ def download_and_extract(
 ) -> list[Path]:
     """Download a public dataset and extract its files to *dest_dir* on disk.
 
-    The on-disk counterpart to ``download_dataset_archive`` (which returns zip
-    bytes): downloads anonymously — optionally filtered to *file_extensions*
-    (e.g. ``["h5"]``) — extracts each regular member (names normalized via
-    ``normalize_zip_member_name``), and returns the written file paths. Raises
-    ``DatasetNotOnlineError`` for tape-archived datasets, same as
-    ``download_dataset_archive``.
+    On-disk wrapper over ``download_datafiles`` (which handles both the zip and
+    single-raw-file IDS responses). Returns the written file paths. Raises
+    ``DatasetNotOnlineError`` for tape-archived datasets.
     """
     dest_dir = Path(dest_dir)
     dest_dir.mkdir(parents=True, exist_ok=True)
-    content = download_dataset_archive(
-        dataset_id, file_extensions=file_extensions, client=client
-    )
     written: list[Path] = []
-    for member_name, data in extract_zip_members(content):
+    for member_name, data in download_datafiles(
+        dataset_id, file_extensions=file_extensions, client=client
+    ):
         out = dest_dir / Path(member_name).name
         out.write_bytes(data)
         written.append(out)

@@ -25,28 +25,21 @@ maintainers = [
 ]
 license = { file = "LICENSE" }
 dependencies = [
-    "nomad-lab>=1.4.1",
+    "nomad-lab>=1.4.3",
     "fastapi",
     "httpx",
     "owlready2",
     "rdflib",
     "pyyaml",
-    # nomad-lab's own "infrastructure" extra pins rdflib==5 workspace-wide; that
-    # version's SPARQL parser is broken with pyparsing>=3 (any query fails with
-    # AttributeError: 'NoneType' object has no attribute 'name'). Pin pyparsing
-    # back to restore SPARQL support, since nothing else in this workspace
-    # constrains it to >=3.
-    "pyparsing<3",
 ]
 
 [project.urls]
 Repository = "https://github.com/FAIRmat-NFDI/nomad-semantic-web-service"
 
 [project.optional-dependencies]
-# Enables the NOMAD-native auto-conversion of downloaded ESRF .h5 files into
-# NXxas entries.
+# Enables auto-conversion of downloaded ESRF .h5 files into NXxas entries.
 nexus = [
-    "pynxtools-xas",
+    "pynxtools-xas>=0.1.1",
 ]
 dev = [
     "ruff",

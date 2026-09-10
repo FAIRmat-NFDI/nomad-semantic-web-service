@@ -58,10 +58,17 @@ def resolve_technique_term(term: str, vocabulary: str | None = None) -> dict[str
 
     if vocabulary.upper() == "PANET":
         mappings = query_panet_to_esrfet(cleaned)
+        # The ontology maps to ESRFET's purl.org namespace, but ICAT+ dataset
+        # records are annotated with the w3id.org IRI form (verified: a
+        # techniquePids search matches only w3id-form PIDs). Canonicalize so the
+        # resolved IRI is directly usable as a search filter.
+        resolved_iri = (
+            canonical_technique_pid(mappings[0]["targetTerm"]) if mappings else None
+        )
         return {
             "input": term,
             "vocabulary": "PANET",
-            "resolved_iri": mappings[0]["targetTerm"] if mappings else None,
+            "resolved_iri": resolved_iri,
             "relation": mappings[0].get("relation") if mappings else None,
             "mappings": mappings,
             "warning": None
