@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: The nomad-semantic-web-service Authors
+#
+# This file is part of nomad-semantic-web-service.
+#
+# SPDX-License-Identifier: Apache-2.0
 """Tests for the NXxas auto-conversion of downloaded ESRF .h5 files.
 
 The pure conversion needs pynxtools + the pynxtools-xas reader (the plugin's

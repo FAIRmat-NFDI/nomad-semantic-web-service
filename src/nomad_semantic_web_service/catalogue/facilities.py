@@ -1,3 +1,10 @@
+# SPDX-FileCopyrightText: The nomad-semantic-web-service Authors
+#
+# This file is part of nomad-semantic-web-service.
+#
+# SPDX-License-Identifier: Apache-2.0
+"""Utilities for interacting with the ESRF ICAT facility API endpoint."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

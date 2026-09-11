@@ -1,6 +1,9 @@
-from datetime import datetime, timezone
-from typing import Any
-
+# SPDX-FileCopyrightText: The nomad-semantic-web-service Authors
+#
+# This file is part of nomad-semantic-web-service.
+#
+# SPDX-License-Identifier: Apache-2.0
+"""
 # Offline demonstrator / test fixture, shaped and valued like real ESRF ICAT+
 # `/catalogue/datasets` records (see https://icatplus.esrf.fr/swagger.json,
 # schema `dataset`): ID21 (ESRF's scanning X-ray microscopy / µXANES beamline)
@@ -17,6 +20,11 @@ from typing import Any
 # exercise technique-based discovery (the intended behaviour once ESRF annotates).
 # Dates sit in 2021-2022 to match DatasetSearchRequest's default search window so
 # the demo finds them out of the box.
+"""
+
+from datetime import datetime, timezone
+from typing import Any
+
 _ESRF = "https://w3id.org/PaN/ESRFET#"
 
 

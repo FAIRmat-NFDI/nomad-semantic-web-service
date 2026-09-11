@@ -1,3 +1,10 @@
+# SPDX-FileCopyrightText: The nomad-semantic-web-service Authors
+#
+# This file is part of nomad-semantic-web-service.
+#
+# SPDX-License-Identifier: Apache-2.0
+"""Handler for the ESRFET ontology and its mapping to PaNET terms."""
+
 from __future__ import annotations
 
 from functools import lru_cache
