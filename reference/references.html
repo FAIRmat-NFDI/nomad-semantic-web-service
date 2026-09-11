@@ -1,0 +1,970 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A tool to query public synchrotron dataset catalogues with semantic OpenAPI annotations.">
+      
+      
+        <meta name="author" content="Lukas Pielsticker">
+      
+      
+      
+        <link rel="prev" href="../explanation/explanation.html">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Reference - nomad-semantic-web-service</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Titillium+Web:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Titillium Web";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="#2A4CDF" data-md-color-accent="#008A67">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#references" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="header.title">
+    <a href="https://nomad-lab.eu" title="nomad-semantic-web-service" class="md-header__button md-logo" aria-label="nomad-semantic-web-service" data-md-component="logo">
+      
+  <img src="../assets/nomad-plugin-logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            nomad-semantic-web-service
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Reference
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/FAIRmat-NFDI/nomad-semantic-web-service" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="https://nomad-lab.eu" title="nomad-semantic-web-service" class="md-nav__button md-logo" aria-label="nomad-semantic-web-service" data-md-component="logo">
+      
+  <img src="../assets/nomad-plugin-logo.png" alt="logo">
+
+    </a>
+    nomad-semantic-web-service
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/FAIRmat-NFDI/nomad-semantic-web-service" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/tutorial.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how_to/install_this_plugin.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install this Plugin
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how_to/use_this_plugin.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use this Plugin
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how_to/contribute_to_this_plugin.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contribute to this plugin
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how_to/contribute_to_the_documentation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contribute to the documentation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../explanation/explanation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="references.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#rest-api-routes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        REST API routes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#datasetsearchrequest-eln-schema-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DatasetSearchRequest ELN schema fields
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#matcheddataset-fields-items-of-matched_datasets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MatchedDataset fields (items of matched_datasets)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#downloadeddataset-entry-created-automatically-by-trigger_download" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DownloadedDataset entry (created automatically by trigger_download)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#rest-api-routes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        REST API routes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#datasetsearchrequest-eln-schema-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DatasetSearchRequest ELN schema fields
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#matcheddataset-fields-items-of-matched_datasets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MatchedDataset fields (items of matched_datasets)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#downloadeddataset-entry-created-automatically-by-trigger_download" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DownloadedDataset entry (created automatically by trigger_download)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h1>
+<h2 id="rest-api-routes">REST API routes<a class="headerlink" href="#rest-api-routes" title="Permanent link">&para;</a></h2>
+<p>Mounted under <code>{api_base_path}/semantic-web-service</code>.</p>
+<p>The routes mirror the real ESRF ICAT+ paths and proxy them anonymously (there
+is no separate "local demo" HTTP route — the demo <code>FAKE_DATASETS</code> are reached
+only through the ELN with <code>use_real_icat=False</code>).</p>
+<table>
+<thead>
+<tr>
+<th>Route</th>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/catalogue/datasets</code></td>
+<td>GET</td>
+<td>Proxy the real ESRF ICAT+ <code>/catalogue/datasets</code> listing (<code>startDate</code>, <code>endDate</code>, <code>instrumentName</code>, and <code>techniquePids</code> — forwarded to ICAT+'s server-side technique filter). Raw JSON from ICAT+.</td>
+</tr>
+<tr>
+<td><code>/ids/data/download</code></td>
+<td>GET</td>
+<td>Proxy the real ESRF IDS <code>/ids/data/download</code>: download a dataset (<code>datasetIds</code>) as a zip, anonymously. Optional <code>fileExtensions</code> (comma-separated, e.g. <code>h5,edf</code>) restricts to matching files. 404 if a filter matches nothing.</td>
+</tr>
+<tr>
+<td><code>/map</code></td>
+<td>GET</td>
+<td>Map a PANET term to its equivalent ESRFET term(s) via the local ontology.</td>
+</tr>
+<tr>
+<td><code>/health</code></td>
+<td>GET</td>
+<td>Health check.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="datasetsearchrequest-eln-schema-fields"><code>DatasetSearchRequest</code> ELN schema fields<a class="headerlink" href="#datasetsearchrequest-eln-schema-fields" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Editable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>synchrotron</code></td>
+<td>enum (<code>ESRF</code>, <code>Diamond Light Source</code>, <code>MAX IV</code>)</td>
+<td>Yes</td>
+<td>Only <code>ESRF</code> is wired to a live endpoint.</td>
+</tr>
+<tr>
+<td><code>vocabulary</code></td>
+<td>enum (<code>ESRFET</code>, <code>PANET</code>)</td>
+<td>Yes</td>
+<td>Vocabulary used for <code>technique_term</code>.</td>
+</tr>
+<tr>
+<td><code>technique_term</code></td>
+<td>string</td>
+<td>Yes</td>
+<td>Term, IRI, or compact curie in the selected vocabulary. Default <code>XAS</code>.</td>
+</tr>
+<tr>
+<td><code>start_date</code> / <code>end_date</code></td>
+<td>datetime</td>
+<td>Yes</td>
+<td>Search window. Default <code>2021-01-01T00:00:00Z</code>/<code>2022-12-31T23:59:59Z</code>.</td>
+</tr>
+<tr>
+<td><code>instrument_name</code></td>
+<td>string</td>
+<td>Yes</td>
+<td>Beamline/instrument filter. Default <code>ID21</code> (its public XAS datasets are technique-annotated and on disk).</td>
+</tr>
+<tr>
+<td><code>use_real_icat</code></td>
+<td>bool</td>
+<td>Yes</td>
+<td>Search the real ICAT+ endpoint instead of the local demo data. Default <code>False</code> (offline demo); set <code>True</code> for live ESRF ICAT+. Real-ICAT results are returned newest-first.</td>
+</tr>
+<tr>
+<td><code>require_online</code></td>
+<td>bool</td>
+<td>Yes</td>
+<td>Only applies with <code>use_real_icat=True</code>. ICAT+'s <code>/catalogue/datasets</code> search has no server-side online/archived filter, so this filters <code>matched_datasets</code> client-side after the fact, dropping any match whose <code>ids_status</code> isn't <code>ONLINE</code> (tape-archived data that would need a slow restore first). Fails open (keeps everything) if the IDS status lookup itself errors.</td>
+</tr>
+<tr>
+<td><code>resolved_technique_term</code></td>
+<td>string</td>
+<td>No</td>
+<td>The ESRFET IRI actually used for the search, resolved automatically on every save.</td>
+</tr>
+<tr>
+<td><code>mapping_warning</code></td>
+<td>string</td>
+<td>No</td>
+<td>Set if a PANET→ESRFET mapping could not be resolved.</td>
+</tr>
+<tr>
+<td><code>detected_technique_ontology</code></td>
+<td>string</td>
+<td>No</td>
+<td>Name of the ontology <code>synchrotron</code>'s <code>/facilities</code> endpoint advertises for technique terms (e.g. <code>ESRFET</code>), discovered automatically. <code>None</code> if discovery hasn't run (non-<code>ESRF</code> synchrotron, offline/test context) or nothing was advertised for the <code>technique</code> concept.</td>
+</tr>
+<tr>
+<td><code>vocabulary_warning</code></td>
+<td>string</td>
+<td>No</td>
+<td>Set if <code>detected_technique_ontology</code> disagrees with the manually selected <code>vocabulary</code>. Informational only — <code>vocabulary</code> is never overridden automatically.</td>
+</tr>
+<tr>
+<td><code>search_key</code></td>
+<td>string</td>
+<td>No</td>
+<td>Internal cache key of the last completed search (date window, resolved term, instrument, <code>use_real_icat</code>, <code>require_online</code>). Search only re-runs when this changes, so that saving for an unrelated reason (e.g. setting <code>file_extensions_filter</code> on a <code>matched_datasets</code> item) doesn't rebuild <code>matched_datasets</code> and discard that item's state.</td>
+</tr>
+<tr>
+<td><code>matched_datasets</code></td>
+<td>repeated section</td>
+<td>No</td>
+<td>Matching dataset records, populated automatically once <code>technique_term</code>/dates are set — see <code>MatchedDataset</code> fields below.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="matcheddataset-fields-items-of-matched_datasets"><code>MatchedDataset</code> fields (items of <code>matched_datasets</code>)<a class="headerlink" href="#matcheddataset-fields-items-of-matched_datasets" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Editable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dataset_id</code>, <code>name</code>, <code>start_date</code>, <code>end_date</code>, <code>instrument_name</code>, <code>sample_name</code></td>
+<td>various</td>
+<td>No</td>
+<td>Mirror the underlying dataset record.</td>
+</tr>
+<tr>
+<td><code>technique_pids</code></td>
+<td>string</td>
+<td>No</td>
+<td>Comma-separated ESRFET technique IRIs.</td>
+</tr>
+<tr>
+<td><code>investigation_name</code></td>
+<td>string</td>
+<td>No</td>
+<td>Name (proposal/experiment session id) of the ICAT+ investigation this dataset belongs to, if present on the record.</td>
+</tr>
+<tr>
+<td><code>investigation_title</code></td>
+<td>string</td>
+<td>No</td>
+<td>Title of that investigation, if present on the record.</td>
+</tr>
+<tr>
+<td><code>landing_page</code></td>
+<td>string</td>
+<td>No</td>
+<td>DOI-based link (<code>https://doi.org/&lt;doi&gt;</code>), if the dataset record has one.</td>
+</tr>
+<tr>
+<td><code>ids_status</code></td>
+<td>string</td>
+<td>No</td>
+<td>IDS online/archive status (<code>ONLINE</code>, <code>ARCHIVED</code>, <code>RESTORING</code>, ...) for real-ICAT+ matches, refreshed on every search. <code>None</code> for local demo data. Only <code>ONLINE</code> downloads immediately.</td>
+</tr>
+<tr>
+<td><code>file_extensions_filter</code></td>
+<td>string</td>
+<td>Yes</td>
+<td>Comma-separated file extensions, e.g. <code>h5,edf</code>. Defaults to <code>h5</code>; clear it to download the whole dataset (can be much larger).</td>
+</tr>
+<tr>
+<td><code>trigger_download</code> (action button "Download Files")</td>
+<td>bool</td>
+<td>Yes (action)</td>
+<td>Anonymously downloads this dataset (filtered by <code>file_extensions_filter</code>, if set) from ICAT+, extracts it into the upload under <code>downloaded_folder</code>, and discards the zip. Only works against real ICAT+ data (<code>use_real_icat=True</code>); a no-op for local demo data, which has no real files behind it. On success, also creates a standalone <code>DownloadedDataset</code> entry (see below) referencing the extracted files. Resets to <code>False</code> once the download runs.</td>
+</tr>
+<tr>
+<td><code>downloaded_folder</code></td>
+<td>string</td>
+<td>No</td>
+<td>Path (within the upload) where the downloaded dataset files were extracted, once <code>trigger_download</code> has run.</td>
+</tr>
+<tr>
+<td><code>downloaded_files</code></td>
+<td>string</td>
+<td>No</td>
+<td>Comma-separated names of the extracted files, relative to <code>downloaded_folder</code>.</td>
+</tr>
+<tr>
+<td><code>auto_convert_to_nxxas</code></td>
+<td>bool</td>
+<td>Yes</td>
+<td>After downloading, convert each raw <code>.h5</code> to a NeXus <code>NXxas</code> <code>.nxs</code> (via <code>pynxtools-xas</code>) and register it as its own entry, so ESRF downloads become discoverable by the same <code>definition == NXxas</code> search as native NeXus data. Default <code>True</code>. Needs the <code>nexus</code> extra (<code>pynxtools-xas</code>) installed; without it the step is skipped with a warning and the download is unaffected.</td>
+</tr>
+<tr>
+<td><code>converted_nxs_files</code></td>
+<td>string</td>
+<td>No</td>
+<td>Comma-separated <code>.nxs</code> mainfiles produced by the auto-conversion.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="downloadeddataset-entry-created-automatically-by-trigger_download"><code>DownloadedDataset</code> entry (created automatically by <code>trigger_download</code>)<a class="headerlink" href="#downloadeddataset-entry-created-automatically-by-trigger_download" title="Permanent link">&para;</a></h2>
+<p>A standalone entry, separate from <code>DatasetSearchRequest</code>, created once per successful <code>trigger_download</code> (as <code>&lt;downloaded_folder&gt;.archive.yaml</code>, e.g. <code>dataset-874478618.archive.yaml</code>) so a downloaded dataset is independently browsable/searchable rather than buried inside a <code>matched_datasets</code> item.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dataset_id</code>, <code>name</code>, <code>start_date</code>, <code>end_date</code>, <code>instrument_name</code>, <code>sample_name</code></td>
+<td>various</td>
+<td>Mirror the <code>MatchedDataset</code> this entry was created from.</td>
+</tr>
+<tr>
+<td><code>technique_pids</code>, <code>investigation_name</code>, <code>investigation_title</code>, <code>landing_page</code></td>
+<td>string</td>
+<td>Same as on <code>MatchedDataset</code>.</td>
+</tr>
+<tr>
+<td><code>ids_status</code></td>
+<td>string</td>
+<td>The IDS status (<code>ONLINE</code>, ...) at the time of download.</td>
+</tr>
+<tr>
+<td><code>downloaded_folder</code></td>
+<td>string</td>
+<td>Path (within the upload) the files were extracted into.</td>
+</tr>
+<tr>
+<td><code>files</code></td>
+<td>repeated section</td>
+<td>One <code>DownloadedFile</code> item (<code>path</code>, a <code>FileEditQuantity</code>) per extracted file, browsable/clickable in the GUI.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
+<p>All entry points are registered under <code>[project.entry-points.'nomad.plugin']</code>
+in <code>pyproject.toml</code>:</p>
+<ul>
+<li><code>nomad_semantic_web_service.apis:api_entry_point</code></li>
+<li><code>nomad_semantic_web_service.schema_packages:schema_package_entry_point</code></li>
+<li><code>nomad_semantic_web_service.schema_packages:downloaded_dataset_entry_point</code></li>
+</ul>
+<p>They must also be listed in the consuming NOMAD instance's <code>nomad.yaml</code> under
+<code>plugins.entry_points.include</code> if that list is a non-empty explicit allowlist.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../javascript.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
