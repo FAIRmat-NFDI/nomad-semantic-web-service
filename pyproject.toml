@@ -25,23 +25,22 @@ maintainers = [
 ]
 license = { file = "LICENSE" }
 dependencies = [
-    "nomad-lab>=1.4.1",
+    "nomad-lab>=1.4.3",
     "fastapi",
     "httpx",
     "owlready2",
     "rdflib",
-    # nomad-lab's own "infrastructure" extra pins rdflib==5 workspace-wide; that
-    # version's SPARQL parser is broken with pyparsing>=3 (any query fails with
-    # AttributeError: 'NoneType' object has no attribute 'name'). Pin pyparsing
-    # back to restore SPARQL support, since nothing else in this workspace
-    # constrains it to >=3.
-    "pyparsing<3",
+    "pyyaml",
 ]
 
 [project.urls]
 Repository = "https://github.com/FAIRmat-NFDI/nomad-semantic-web-service"
 
 [project.optional-dependencies]
+# Enables auto-conversion of downloaded ESRF .h5 files into NXxas entries.
+nexus = [
+    "pynxtools-xas>=0.1.0",
+]
 dev = [
     "ruff",
     "pytest",
@@ -55,6 +54,7 @@ dev = [
 
 [project.entry-points.'nomad.plugin']
 schema_package_entry_point = "nomad_semantic_web_service.schema_packages:schema_package_entry_point"
+downloaded_dataset_entry_point = "nomad_semantic_web_service.schema_packages:downloaded_dataset_entry_point"
 api_entry_point = "nomad_semantic_web_service.apis:api_entry_point"
 
 
@@ -149,6 +149,12 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 nomad_semantic_web_service = ["ontologies/*.owl"]
+
+[tool.pytest.ini_options]
+addopts = "-m 'not live'"
+markers = [
+    "live: hits the real icatplus.esrf.fr over the network; excluded by default (run with `pytest -m live`)",
+]
 
 [tool.cruft]
 # Avoid updating workflow files, this leads to permissions issues

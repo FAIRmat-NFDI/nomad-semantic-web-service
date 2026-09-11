@@ -1,89 +1,92 @@
 from datetime import datetime, timezone
 from typing import Any
 
-# Shaped like a real ICAT+ /catalogue/public/datasets record (see
-# https://icatplus.esrf.fr/swagger.json, schema `dataset`, and
-# catalogue.icat.landing_page_for_dataset): `techniques` is a list of
-# {..., "pid": str} objects, not a flat list of PIDs, and a dataset's public
-# landing page comes from `investigation.doi`, not a top-level `location`
-# (which is an internal storage path on real records).
+# Offline demonstrator / test fixture, shaped and valued like real ESRF ICAT+
+# `/catalogue/datasets` records (see https://icatplus.esrf.fr/swagger.json,
+# schema `dataset`): ID21 (ESRF's scanning X-ray microscopy / µXANES beamline)
+# XAS acquisitions — matching the `DatasetSearchRequest` default instrument, so
+# the default search finds them — belonging to an `investigation`
+# (proposal/experiment session) with an ESRF DOI, `techniques` as a list of
+# {..., "pid": str} objects, and `sampleName`.
+# `investigation.doi` (not the internal `location` path) is the public landing
+# page, resolved by catalogue.icat.landing_page_for_dataset.
+#
+# NOTE ON `techniques`: real *public* ESRF records currently often come back with an
+# empty `techniques: []` (they aren't annotated yet). These fixtures are annotated
+# with the XAS/EXAFS technique PIDs they *should* carry, so the offline flow can
+# exercise technique-based discovery (the intended behaviour once ESRF annotates).
+# Dates sit in 2021-2022 to match DatasetSearchRequest's default search window so
+# the demo finds them out of the box.
+_ESRF = "https://w3id.org/PaN/ESRFET#"
+
+
+def _technique(dataset_id: int, tid: int, label: str) -> dict[str, Any]:
+    return {"id": tid, "datasetId": dataset_id, "pid": _ESRF + label, "name": label}
+
+
+# Each record belongs to its own investigation (proposal/experiment session),
+# as on real ICAT+ where different datasets come from different beamtimes.
 FAKE_DATASETS: list[dict[str, Any]] = [
     {
         "id": 1001,
-        "name": "ID21 XAS catalyst oxidation-state dataset",
+        "name": "0001",
         "startDate": datetime(2021, 3, 18, 9, 15, tzinfo=timezone.utc),
         "endDate": datetime(2021, 3, 18, 11, 45, tzinfo=timezone.utc),
-        "location": "/data/demo/id21/xas-catalyst",
-        "investigation": {"doi": "10.0000/DEMO-ID21-1001"},
+        "location": "/data/visitor/ihhc3846/id21/20210318/raw/FeK_align",
+        "investigation": {
+            "name": "IH-HC-3846",
+            "title": "High pressure EXAFS study on FeTiO3",
+            "doi": "10.15151/ESRF-ES-1042671535",
+        },
         "instrumentName": "ID21",
-        "sampleName": "ceria-supported platinum catalyst",
-        "techniques": [
-            {
-                "id": 1,
-                "datasetId": 1001,
-                "pid": "https://w3id.org/PaN/ESRFET#XAS",
-                "name": "XAS",
-            },
-        ],
+        "sampleName": "FeK_align",
+        "techniques": [_technique(1001, 1, "XAS")],
     },
     {
         "id": 1002,
-        "name": "ID21 energy-dispersive XAS reference scan",
-        "startDate": datetime(2021, 3, 19, 14, 0, tzinfo=timezone.utc),
-        "endDate": datetime(2021, 3, 19, 18, 30, tzinfo=timezone.utc),
-        "location": "/data/demo/id21/ed-xas-reference",
-        "investigation": {"doi": "10.0000/DEMO-ID21-1002"},
+        "name": "ambient",
+        "startDate": datetime(2021, 6, 19, 14, 0, tzinfo=timezone.utc),
+        "endDate": datetime(2021, 6, 19, 18, 30, tzinfo=timezone.utc),
+        "location": "/data/visitor/ma5321/id21/20210619/raw/DAC6-QMo",
+        "investigation": {
+            "name": "MA-5321",
+            "title": "Operando XAS of Mo-based catalysts under pressure",
+            "doi": "10.15151/ESRF-ES-1058872210",
+        },
         "instrumentName": "ID21",
-        "sampleName": "iron oxide calibration foil",
-        "techniques": [
-            {
-                "id": 2,
-                "datasetId": 1002,
-                "pid": "https://w3id.org/PaN/ESRFET#ED-XAS",
-                "name": "ED-XAS",
-            },
-            {
-                "id": 3,
-                "datasetId": 1002,
-                "pid": "https://w3id.org/PaN/ESRFET#XAS",
-                "name": "XAS",
-            },
-        ],
+        "sampleName": "DAC6-QMo",
+        "techniques": [_technique(1002, 2, "EXAFS"), _technique(1002, 3, "XAS")],
     },
     {
         "id": 1003,
-        "name": "ID24 dispersive XAS battery electrode dataset",
-        "startDate": datetime(2021, 5, 2, 8, 30, tzinfo=timezone.utc),
-        "endDate": datetime(2021, 5, 2, 15, 10, tzinfo=timezone.utc),
-        "location": "/data/demo/id24/dispersive-xas-electrode",
-        "investigation": {"doi": "10.0000/DEMO-ID24-1003"},
-        "instrumentName": "ID24",
-        "sampleName": "lithium nickel manganese cobalt oxide electrode",
-        "techniques": [
-            {
-                "id": 4,
-                "datasetId": 1003,
-                "pid": "https://w3id.org/PaN/ESRFET#ED-XAS",
-                "name": "ED-XAS",
-            },
-        ],
+        "name": "0001",
+        "startDate": datetime(2022, 2, 10, 8, 30, tzinfo=timezone.utc),
+        "endDate": datetime(2022, 2, 10, 15, 10, tzinfo=timezone.utc),
+        "location": "/data/visitor/es987/id21/20220210/raw/Brucite",
+        "investigation": {
+            "name": "ES-987",
+            "title": "EXAFS of brucite-type layered hydroxides",
+            "doi": "10.15151/ESRF-ES-0993217744",
+        },
+        "instrumentName": "ID21",
+        "sampleName": "Brucite",
+        # EXAFS but not tagged with the generic XAS PID -> not a "XAS" match,
+        # mirroring how sibling scans in a session can carry different tags.
+        "techniques": [_technique(1003, 4, "EXAFS")],
     },
     {
         "id": 1004,
-        "name": "High-resolution tomography of heritage material",
+        "name": "align",
         "startDate": datetime(2022, 9, 12, 7, 45, tzinfo=timezone.utc),
         "endDate": datetime(2022, 9, 12, 12, 20, tzinfo=timezone.utc),
-        "location": "/data/demo/id19/tomography-heritage",
-        "investigation": {"doi": "10.0000/DEMO-ID19-1004"},
-        "instrumentName": "ID19",
-        "sampleName": "painted ceramic fragment",
-        "techniques": [
-            {
-                "id": 5,
-                "datasetId": 1004,
-                "pid": "https://w3id.org/PaN/ESRFET#TOMO",
-                "name": "TOMO",
-            },
-        ],
+        "location": "/data/inhouse/ch6120/id21/20220912/raw/beam_align",
+        "investigation": {
+            "name": "CH-6120",
+            "title": "Beamline alignment and energy calibration",
+            "doi": "10.15151/ESRF-ES-0771145509",
+        },
+        "instrumentName": "ID21",
+        "sampleName": "beam alignment",
+        "techniques": [],
     },
 ]

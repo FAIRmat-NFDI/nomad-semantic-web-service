@@ -6,7 +6,8 @@ from tempfile import NamedTemporaryFile
 from typing import Any
 
 from owlready2 import PREDEFINED_ONTOLOGIES, World
-from rdflib import Graph
+from rdflib import Graph, URIRef
+from rdflib.namespace import OWL
 
 ESRFET_ONTOLOGY_PATH = (
     Path(__file__).resolve().parent.parent / "ontologies" / "ESRFET.owl"
@@ -65,31 +66,33 @@ def load_esrfet_graph() -> Graph:
 
 
 def query_panet_to_esrfet(term: str) -> list[dict[str, Any]]:
-    panet_iri = normalize_panet_term(term)
-    query = f"""
-PREFIX owl: <http://www.w3.org/2002/07/owl#>
+    """Map a PaNET term to equivalent ESRFET term(s) via ``owl:equivalentClass``.
 
-SELECT DISTINCT ?esrfet WHERE {{
-  {{
-    <{panet_iri}> owl:equivalentClass ?esrfet .
-  }}
-  UNION
-  {{
-    ?esrfet owl:equivalentClass <{panet_iri}> .
-  }}
-  FILTER(STRSTARTS(STR(?esrfet), "{ESRFET_PURL_PREFIX}"))
-}}
-ORDER BY ?esrfet
-"""
+    Uses direct rdflib triple navigation rather than a SPARQL query on purpose:
+    ``nomad-lab``'s environment resolves ``pyparsing>=3`` (matplotlib pulls it
+    in), and rdflib 5's SPARQL parser is broken under pyparsing>=3. Triple
+    traversal has no such dependency, so this stays deployable in the Oasis
+    without pinning pyparsing.
+    """
+    panet_iri = normalize_panet_term(term)
     graph = load_esrfet_graph()
+    subject = URIRef(panet_iri)
+
+    # owl:equivalentClass is symmetric; the ontology may assert it either way.
+    equivalents = set(graph.objects(subject, OWL.equivalentClass))
+    equivalents |= set(graph.subjects(OWL.equivalentClass, subject))
+
+    targets = sorted(
+        str(iri) for iri in equivalents if str(iri).startswith(ESRFET_PURL_PREFIX)
+    )
     return [
         {
             "sourceTerm": panet_iri,
             "sourceCompact": compact_iri(panet_iri),
-            "targetTerm": str(row.esrfet),
-            "targetCompact": compact_iri(str(row.esrfet)),
-            "targetLabel": label_from_iri(str(row.esrfet)),
+            "targetTerm": target,
+            "targetCompact": compact_iri(target),
+            "targetLabel": label_from_iri(target),
             "relation": "owl:equivalentClass",
         }
-        for row in graph.query(query)
+        for target in targets
     ]
