@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: The nomad-semantic-web-service Authors
+#
+# This file is part of nomad-semantic-web-service.
+#
+# SPDX-License-Identifier: Apache-2.0
 """Opt-in test against the real icatplus.esrf.fr/facilities, not a mock.
 
 See test_icat_live.py's module docstring for why this suite exists at all.

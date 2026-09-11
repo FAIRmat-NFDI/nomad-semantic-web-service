@@ -1,3 +1,10 @@
+# SPDX-FileCopyrightText: The nomad-semantic-web-service Authors
+#
+# This file is part of nomad-semantic-web-service.
+#
+# SPDX-License-Identifier: Apache-2.0
+"""Test ICAT catalogue search functionality."""
+
 from nomad_semantic_web_service.catalogue.search import (
     investigation_field,
     technique_pids_of,

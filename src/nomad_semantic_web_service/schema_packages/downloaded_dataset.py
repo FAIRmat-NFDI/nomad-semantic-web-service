@@ -1,3 +1,10 @@
+# SPDX-FileCopyrightText: The nomad-semantic-web-service Authors
+#
+# This file is part of nomad-semantic-web-service.
+#
+# SPDX-License-Identifier: Apache-2.0
+"""Schema for downloaded datasets from the search ELN."""
+
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import TYPE_CHECKING

@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: The nomad-semantic-web-service Authors
+#
+# This file is part of nomad-semantic-web-service.
+#
+# SPDX-License-Identifier: Apache-2.0
 """Opt-in tests against the real icatplus.esrf.fr, not mocks.
 
 Every other test in this suite uses httpx.MockTransport/monkeypatch, so none
