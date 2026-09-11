@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-title: 'nomad-semantic-web-service: A NOMAD plugin for ...'
+title: 'nomad-semantic-web-service: A NOMAD plugin for semantic search and extraction of public synchrotron dataset records'
 version: 0.1.0
 message:
   If you use this software, please cite it using the
@@ -13,9 +13,14 @@ doi: 10.5281/zenodo.0000000
 repository-code: https://github.com/FAIRmat-NFDI/nomad-semantic-web-service
 url: https://zenodo.org/records/0000000
 keywords:
-  - keyword1
+  - NOMAD
+  - NeXus
+  - ESRF
+  - ontologies
 abstract:
-  This is a template for a CITATION.cff file. Please edit the fields accordingly.
+  nomad-semantic-web-service is a NOMAD plugin that finds and extracts public
+  synchrotron dataset records from ESRF-style catalogues, with semantic OpenAPI
+  annotations and PANET/ESRFET ontology term mapping.
 license: Apache-2.0
 funding:
   - name: Funding Agency
