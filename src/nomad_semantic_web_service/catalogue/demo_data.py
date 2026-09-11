@@ -3,9 +3,11 @@ from typing import Any
 
 # Offline demonstrator / test fixture, shaped and valued like real ESRF ICAT+
 # `/catalogue/datasets` records (see https://icatplus.esrf.fr/swagger.json,
-# schema `dataset`): BM23 (ESRF's EXAFS beamline) transmission-XAS acquisitions
-# belonging to an `investigation` (proposal/experiment session) with an ESRF
-# DOI, `techniques` as a list of {..., "pid": str} objects, and `sampleName`.
+# schema `dataset`): ID21 (ESRF's scanning X-ray microscopy / µXANES beamline)
+# XAS acquisitions — matching the `DatasetSearchRequest` default instrument, so
+# the default search finds them — belonging to an `investigation`
+# (proposal/experiment session) with an ESRF DOI, `techniques` as a list of
+# {..., "pid": str} objects, and `sampleName`.
 # `investigation.doi` (not the internal `location` path) is the public landing
 # page, resolved by catalogue.icat.landing_page_for_dataset.
 #
@@ -30,13 +32,13 @@ FAKE_DATASETS: list[dict[str, Any]] = [
         "name": "0001",
         "startDate": datetime(2021, 3, 18, 9, 15, tzinfo=timezone.utc),
         "endDate": datetime(2021, 3, 18, 11, 45, tzinfo=timezone.utc),
-        "location": "/data/visitor/ihhc3846/bm23/20210318/raw/FeK_align",
+        "location": "/data/visitor/ihhc3846/id21/20210318/raw/FeK_align",
         "investigation": {
             "name": "IH-HC-3846",
             "title": "High pressure EXAFS study on FeTiO3",
             "doi": "10.15151/ESRF-ES-1042671535",
         },
-        "instrumentName": "BM23",
+        "instrumentName": "ID21",
         "sampleName": "FeK_align",
         "techniques": [_technique(1001, 1, "XAS")],
     },
@@ -45,13 +47,13 @@ FAKE_DATASETS: list[dict[str, Any]] = [
         "name": "ambient",
         "startDate": datetime(2021, 6, 19, 14, 0, tzinfo=timezone.utc),
         "endDate": datetime(2021, 6, 19, 18, 30, tzinfo=timezone.utc),
-        "location": "/data/visitor/ma5321/bm23/20210619/raw/DAC6-QMo",
+        "location": "/data/visitor/ma5321/id21/20210619/raw/DAC6-QMo",
         "investigation": {
             "name": "MA-5321",
             "title": "Operando XAS of Mo-based catalysts under pressure",
             "doi": "10.15151/ESRF-ES-1058872210",
         },
-        "instrumentName": "BM23",
+        "instrumentName": "ID21",
         "sampleName": "DAC6-QMo",
         "techniques": [_technique(1002, 2, "EXAFS"), _technique(1002, 3, "XAS")],
     },
@@ -60,13 +62,13 @@ FAKE_DATASETS: list[dict[str, Any]] = [
         "name": "0001",
         "startDate": datetime(2022, 2, 10, 8, 30, tzinfo=timezone.utc),
         "endDate": datetime(2022, 2, 10, 15, 10, tzinfo=timezone.utc),
-        "location": "/data/visitor/es987/bm23/20220210/raw/Brucite",
+        "location": "/data/visitor/es987/id21/20220210/raw/Brucite",
         "investigation": {
             "name": "ES-987",
             "title": "EXAFS of brucite-type layered hydroxides",
             "doi": "10.15151/ESRF-ES-0993217744",
         },
-        "instrumentName": "BM23",
+        "instrumentName": "ID21",
         "sampleName": "Brucite",
         # EXAFS but not tagged with the generic XAS PID -> not a "XAS" match,
         # mirroring how sibling scans in a session can carry different tags.
@@ -77,13 +79,13 @@ FAKE_DATASETS: list[dict[str, Any]] = [
         "name": "align",
         "startDate": datetime(2022, 9, 12, 7, 45, tzinfo=timezone.utc),
         "endDate": datetime(2022, 9, 12, 12, 20, tzinfo=timezone.utc),
-        "location": "/data/inhouse/ch6120/bm23/20220912/raw/beam_align",
+        "location": "/data/inhouse/ch6120/id21/20220912/raw/beam_align",
         "investigation": {
             "name": "CH-6120",
             "title": "Beamline alignment and energy calibration",
             "doi": "10.15151/ESRF-ES-0771145509",
         },
-        "instrumentName": "BM23",
+        "instrumentName": "ID21",
         "sampleName": "beam alignment",
         "techniques": [],
     },

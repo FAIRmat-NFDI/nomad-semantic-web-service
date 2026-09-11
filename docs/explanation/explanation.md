@@ -46,9 +46,10 @@ are worth understanding:
   the ontology — and the plugin converts between them so a mapping result can be
   matched against records.) The mapping walks rdflib triples directly rather
   than issuing a SPARQL query — see the note on `pyparsing` below.
-- **Real vs. offline.** With `use_real_icat` on (the default, and only in a
-  server context) the search queries the live ESRF ICAT+; turn it off to run
-  against a local demo fixture. The offline fixture mirrors the real
+- **Real vs. offline.** By default the search runs against a local demo fixture
+  (ID21 XAS records shaped to match the default instrument/technique/dates);
+  turn `use_real_icat` on (and only in a server context) to query the live ESRF
+  ICAT+ instead. The offline fixture mirrors the real
   `techniques`/`investigation`/DOI record structure, so no code needs to branch
   on which source it came from.
 

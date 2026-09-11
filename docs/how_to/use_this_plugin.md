@@ -38,10 +38,11 @@ See the [reference](../reference/references.md) for all routes, or open
 1. In the NOMAD GUI, create a new entry of type **Dataset search request**.
 2. The defaults already target the OSCARS demonstrator source — `synchrotron`
    `ESRF`, `vocabulary` `ESRFET`, `technique_term` `XAS`, `instrument_name`
-   `ID21`, the 2021–2022 window, and `use_real_icat` on — so simply saving runs
-   a live ID21 XAS search. Adjust any of these (e.g. set `vocabulary` `PANET`
-   and `technique_term` `PaNET01196`, or a different `instrument_name`) as
-   needed.
+   `ID21`, and the 2021–2022 window — so simply saving runs an ID21 XAS search
+   against the bundled offline demo catalogue. Set `use_real_icat` (step 4) to
+   run the same search against live ESRF ICAT+. Adjust any field (e.g. set
+   `vocabulary` `PANET` and `technique_term` `PaNET01196`, or a different
+   `instrument_name`) as needed.
 3. Save the entry. `resolved_technique_term` is resolved (after PANET→ESRFET
    mapping, if applicable) and the search runs automatically in the same save —
    `matched_datasets` is populated immediately, including a DOI-based
@@ -52,10 +53,9 @@ See the [reference](../reference/references.md) for all routes, or open
    save also checks the facility's advertised technique vocabulary
    (`detected_technique_ontology`) and flags a `vocabulary_warning` if it
    disagrees with your `vocabulary` selection, without changing it.
-4. `use_real_icat` (on by default) queries the real ESRF ICAT+ endpoint instead
-   of the local demo data (requires network access to `icatplus.esrf.fr`); turn
-   it off to explore the bundled demo catalogue offline. Each real
-   match's `ids_status` (`ONLINE`/`ARCHIVED`/`RESTORING`/...) is filled in at
+4. Toggle `use_real_icat` (off by default) to query the real ESRF ICAT+ endpoint
+   instead of the local demo data (requires network access to `icatplus.esrf.fr`).
+   Each real match's `ids_status` (`ONLINE`/`ARCHIVED`/`RESTORING`/...) is filled in at
    the same time — real ICAT+ archives older public datasets to tape, and
    only `ONLINE` ones download immediately. Toggle `require_online` to drop
    non-`ONLINE` matches from `matched_datasets` entirely instead of just

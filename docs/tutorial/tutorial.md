@@ -8,31 +8,26 @@ including a PANET→ESRFET term mapping.
 In your NOMAD upload, create a new entry of type **Dataset search request**
 (`DatasetSearchRequest`).
 
-## 2. Search with the defaults (live ID21 XAS)
+## 2. Search with the defaults (offline demo)
 
-The entry's defaults already target the OSCARS demonstrator source, so you can
-just save it. The relevant fields are:
+The entry's defaults already describe the OSCARS demonstrator's ID21 XAS search,
+so you can just save it. The relevant fields are:
 
 - `synchrotron`: `ESRF`
 - `vocabulary`: `ESRFET`
 - `technique_term`: `XAS`
 - `instrument_name`: `ID21`
 - `start_date` / `end_date`: `2021-01-01T00:00:00Z` / `2022-12-31T23:59:59Z`
-- `use_real_icat`: `true`
+- `use_real_icat`: `false`
 
-With `use_real_icat` on (the default), saving queries the live ESRF ICAT+
-catalogue (this needs network access to `icatplus.esrf.fr` and a server
-context). `resolved_technique_term` is resolved (shows
-`https://w3id.org/PaN/ESRFET#XAS`) and the search runs in the same save.
-ID21's public XAS datasets *are* annotated with the XAS technique PID, so the
-resolved IRI is forwarded to ICAT+'s server-side `techniquePids` filter and
-`matched_datasets` lists the real ID21 XAS datasets in the window — newest
-first — each with its `investigation_name`/`investigation_title`,
-DOI-based `landing_page`, and IDS `ids_status` filled in.
-
-(BM23, ESRF's tape-archived EXAFS beamline, is *not* annotated: a `techniquePids`
-filter returns nothing for it, which is why the demonstrator uses ID21 instead —
-see the offline-demo note in step 4.)
+With `use_real_icat` off (the default), saving searches the bundled **offline
+demo catalogue** (no network needed). `resolved_technique_term` is resolved
+(shows `https://w3id.org/PaN/ESRFET#XAS`) and the search runs in the same save:
+`matched_datasets` lists the two ID21 demo records tagged with the XAS technique,
+`FeK_align` and `DAC6-QMo`, each with its `investigation_name`/`investigation_title`
+filled in. The demo records (`catalogue/demo_data.py`) mirror the shape and
+values of real ESRF ICAT+ records; step 4 runs the same search against the live
+catalogue.
 
 If `synchrotron` is `ESRF`, saving also queries ESRF's own `/facilities`
 endpoint to check which vocabulary it actually advertises for technique
@@ -53,23 +48,22 @@ SPARQL query), stores the result in `resolved_technique_term`, and searches
 using it — all in this one save. If no mapping is found, `mapping_warning` is set
 instead and `matched_datasets` stays empty.
 
-## 4. Explore the offline demo catalogue
+## 4. Search the live ESRF ICAT+ catalogue
 
-Set `use_real_icat`: `false` to search the bundled demo fixture instead of the
-live catalogue — useful for exploring the ELN without network access. The demo
-records (`catalogue/demo_data.py`) are shaped and valued like real ICAT+
-records, but they are **BM23** transmission-XAS acquisitions (e.g. the samples
-`FeK_align` and `DAC6-QMo`, both tagged with the XAS technique), not ID21 data.
-Unlike public BM23 data on the live server, these fixtures are annotated with
-their technique PIDs, so a `technique_term` `XAS` search matches them out of the
-box within the default 2021–2022 window. Set `instrument_name` to `BM23` to see
-them. The offline data has no real files behind it, so downloading (step 5) is a
-no-op here.
+Set `use_real_icat`: `true` to run the same search against the real endpoint
+(needs network access to `icatplus.esrf.fr` and a server context). ID21's public
+XAS datasets *are* annotated with the XAS technique PID, so the resolved IRI is
+forwarded to ICAT+'s server-side `techniquePids` filter, and `matched_datasets`
+lists the real ID21 XAS datasets in the window — newest first — each with its
+`investigation_name`/`investigation_title`, DOI-based `landing_page`, and IDS
+`ids_status` filled in. (BM23, ESRF's tape-archived EXAFS beamline, is *not*
+annotated: a `techniquePids` filter returns nothing for it, which is why the
+demonstrator uses ID21.)
 
 ## 5. Download files from a real dataset
 
-This step needs `use_real_icat: true` (the offline demo of step 4 has no real
-files behind it). Before downloading, check `ids_status` on the
+This step needs `use_real_icat: true` (step 4); the offline demo catalogue has no
+real files behind it. Before downloading, check `ids_status` on the
 `MatchedDataset`: real ICAT+ archives older public datasets to tape, and only
 `ONLINE` ones download immediately (`require_online: true` on the search
 filters out anything else upfront). On an `ONLINE` `MatchedDataset`,

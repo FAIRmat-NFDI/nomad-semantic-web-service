@@ -21,10 +21,10 @@ only through the ELN with `use_real_icat=False`).
 |---|---|---|---|
 | `synchrotron` | enum (`ESRF`, `Diamond Light Source`, `MAX IV`) | Yes | Only `ESRF` is wired to a live endpoint. |
 | `vocabulary` | enum (`ESRFET`, `PANET`) | Yes | Vocabulary used for `technique_term`. |
-| `technique_term` | string | Yes | Term, IRI, or compact curie in the selected vocabulary. |
+| `technique_term` | string | Yes | Term, IRI, or compact curie in the selected vocabulary. Default `XAS`. |
 | `start_date` / `end_date` | datetime | Yes | Search window. Default `2021-01-01T00:00:00Z`/`2022-12-31T23:59:59Z`. |
-| `instrument_name` | string | Yes | Optional beamline/instrument filter. |
-| `use_real_icat` | bool | Yes | Search the real ICAT+ endpoint instead of local demo data. |
+| `instrument_name` | string | Yes | Beamline/instrument filter. Default `ID21` (its public XAS datasets are technique-annotated and on disk). |
+| `use_real_icat` | bool | Yes | Search the real ICAT+ endpoint instead of the local demo data. Default `False` (offline demo); set `True` for live ESRF ICAT+. Real-ICAT results are returned newest-first. |
 | `require_online` | bool | Yes | Only applies with `use_real_icat=True`. ICAT+'s `/catalogue/datasets` search has no server-side online/archived filter, so this filters `matched_datasets` client-side after the fact, dropping any match whose `ids_status` isn't `ONLINE` (tape-archived data that would need a slow restore first). Fails open (keeps everything) if the IDS status lookup itself errors. |
 | `resolved_technique_term` | string | No | The ESRFET IRI actually used for the search, resolved automatically on every save. |
 | `mapping_warning` | string | No | Set if a PANET→ESRFET mapping could not be resolved. |

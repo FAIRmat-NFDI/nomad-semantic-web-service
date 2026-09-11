@@ -17,6 +17,7 @@ SPARQL
 STARTDATE
 STRSTARTS
 TOMO
+XANES
 addopts
 autoconvert
 beamline

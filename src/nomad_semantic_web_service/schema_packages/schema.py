@@ -284,12 +284,13 @@ class DatasetSearchRequest(Schema):
     )
     use_real_icat = Quantity(
         type=bool,
-        default=True,
+        default=False,
         description=(
-            "If set, search the real ESRF ICAT+ public datasets endpoint instead "
-            "of the local demo data. Requires network access to icatplus.esrf.fr. "
-            "Defaults to True for the OSCARS demonstrator; set False to explore "
-            "against the bundled demo catalogue offline."
+            "If set, search the real ESRF ICAT+ public datasets endpoint "
+            "(requires network access to icatplus.esrf.fr). Defaults to False, so "
+            "a freshly saved entry searches the bundled offline demo catalogue "
+            "(ID21 XAS records matching the default instrument/technique/dates); "
+            "set True to run the same search against live ESRF ICAT+."
         ),
         a_eln=ELNAnnotation(component=ELNComponentEnum.BoolEditQuantity),
     )

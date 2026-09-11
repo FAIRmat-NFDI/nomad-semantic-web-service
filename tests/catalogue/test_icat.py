@@ -39,7 +39,7 @@ def test_builds_icat_catalogue_dataset_params():
         "instrumentName": "BM23",
         "limit": "100",
         "sortBy": "STARTDATE",
-        "sortOrder": "1",
+        "sortOrder": "-1",
     }
 
 

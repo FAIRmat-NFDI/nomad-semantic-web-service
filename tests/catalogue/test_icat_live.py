@@ -15,7 +15,7 @@ import pytest
 
 from nomad_semantic_web_service.catalogue.icat import (
     DatasetNotOnlineError,
-    download_dataset_archive,
+    download_datafiles,
     fetch_icat_catalogue_datasets,
     get_anonymous_session_id,
     get_datasets_status,
@@ -24,42 +24,47 @@ from nomad_semantic_web_service.catalogue.icat import (
 
 pytestmark = pytest.mark.live
 
-# Matches oscarsSemanticWebService's own confirmed-working example
-# (README.md / app/agent.py DEFAULT_* constants), so a failure here means
-# either the endpoint or this default example query has broken again.
-BM23_START_DATE = date(2023, 2, 9)
-BM23_END_DATE = date(2023, 2, 13)
-BM23_INSTRUMENT = "BM23"
+# The OSCARS demonstrator's own target: ID21's public XAS datasets are annotated
+# with the technique PID (so techniquePids filters them server-side) and are
+# kept on disk (ONLINE, not tape-archived), so this window actually exercises the
+# download chain below. A failure here means the endpoint or this query broke.
+ID21_START_DATE = date(2021, 1, 1)
+ID21_END_DATE = date(2022, 12, 31)
+ID21_INSTRUMENT = "ID21"
+XAS_TECHNIQUE_PID = "https://w3id.org/PaN/ESRFET#XAS"
 
 
-def test_live_fetch_icat_catalogue_datasets_bm23():
+def test_live_fetch_icat_catalogue_datasets_id21():
     datasets = fetch_icat_catalogue_datasets(
-        start_date=BM23_START_DATE,
-        end_date=BM23_END_DATE,
-        instrument_name=BM23_INSTRUMENT,
+        start_date=ID21_START_DATE,
+        end_date=ID21_END_DATE,
+        instrument_name=ID21_INSTRUMENT,
+        technique_pids=XAS_TECHNIQUE_PID,
     )
 
     assert isinstance(datasets, list)
     if not datasets:
         pytest.skip(
-            "ICAT+ returned no BM23 datasets for the reference window; "
+            "ICAT+ returned no ID21 XAS datasets for the reference window; "
             "cannot exercise the download chain below."
         )
     assert all("id" in dataset for dataset in datasets)
 
 
-def test_live_download_chain_for_first_bm23_dataset():
+def test_live_download_chain_for_first_id21_dataset():
     """Exercises the full anonymous download path used by
     MatchedDataset.normalize()'s trigger_download: session -> file listing ->
-    filtered content download. Downloads only files matching a narrow
-    extension filter, not the whole (potentially large) dataset."""
+    filtered download. ID21 datasets hold a single `.h5`, which IDS returns as
+    the raw file (not a zip); download_datafiles handles both, returning
+    (name, bytes) pairs."""
     datasets = fetch_icat_catalogue_datasets(
-        start_date=BM23_START_DATE,
-        end_date=BM23_END_DATE,
-        instrument_name=BM23_INSTRUMENT,
+        start_date=ID21_START_DATE,
+        end_date=ID21_END_DATE,
+        instrument_name=ID21_INSTRUMENT,
+        technique_pids=XAS_TECHNIQUE_PID,
     )
     if not datasets:
-        pytest.skip("ICAT+ returned no BM23 datasets for the reference window.")
+        pytest.skip("ICAT+ returned no ID21 XAS datasets for the reference window.")
 
     dataset_id = datasets[0]["id"]
 
@@ -80,12 +85,11 @@ def test_live_download_chain_for_first_bm23_dataset():
     if not extensions:
         pytest.skip(f"Dataset {dataset_id}'s datafiles have no file extensions.")
 
-    # Any one real extension confirms the session/listing/download chain
-    # works end-to-end without pulling the whole (possibly large) dataset.
-    content = download_dataset_archive(
-        dataset_id, file_extensions=[next(iter(extensions))]
-    )
-    assert content
+    # Any one real extension confirms the session/listing/download chain works
+    # end-to-end without pulling the whole dataset. Returns (name, bytes) pairs.
+    members = download_datafiles(dataset_id, file_extensions=[next(iter(extensions))])
+    assert members
+    assert all(name and data for name, data in members)
 
 
 def test_live_archived_dataset_raises_not_online_instead_of_a_bare_404():
@@ -93,7 +97,7 @@ def test_live_archived_dataset_raises_not_online_instead_of_a_bare_404():
     datasets to tape, and downloading one 404s with DataNotOnlineException
     until restored. Confirmed empirically that DatasetSearchRequest's own
     default search window (2021-01-01..2022-12-31) lands squarely in archived
-    territory. download_dataset_archive() must surface this as
+    territory. download_datafiles() must surface this as
     DatasetNotOnlineError, not let the raw httpx.HTTPStatusError propagate."""
     datasets = fetch_icat_catalogue_datasets(
         start_date=date(2021, 1, 1),
@@ -112,7 +116,7 @@ def test_live_archived_dataset_raises_not_online_instead_of_a_bare_404():
         pytest.skip("All datasets in the 2021 H1 window are currently ONLINE.")
 
     with pytest.raises(DatasetNotOnlineError) as exc_info:
-        download_dataset_archive(archived_ids[0])
+        download_datafiles(archived_ids[0])
 
     assert exc_info.value.dataset_id == archived_ids[0]
     assert exc_info.value.status != "ONLINE"

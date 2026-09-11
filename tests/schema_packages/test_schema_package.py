@@ -20,6 +20,7 @@ def test_dataset_search_request_esrfet():
     assert data.resolved_technique_term == "https://w3id.org/PaN/ESRFET#XAS"
     assert data.mapping_warning is None
     # Both 1001 (FeK_align) and 1002 (DAC6-QMo) carry the XAS technique PID.
+    print(data.m_to_dict())
     assert len(data.matched_datasets) == 2
     assert data.matched_datasets[0].name == "0001"
     assert data.matched_datasets[0].sample_name == "FeK_align"
@@ -41,10 +42,11 @@ def test_dataset_search_request_panet():
     normalize_all(entry_archive)
 
     data = entry_archive.data
-    # query_panet_to_esrfet() returns the target IRI in the ontology's own
-    # purl.org namespace; canonical_technique_pid() converts it to the
-    # w3id.org form internally when matching against dataset records.
-    assert data.resolved_technique_term == "http://purl.org/pan-science/ESRFET#XAS"
+    # query_panet_to_esrfet() finds the target in the ontology's own purl.org
+    # namespace; resolve_technique_term() canonicalizes it to the w3id.org form
+    # used on ICAT+ dataset records, so resolved_technique_term is directly
+    # usable as a techniquePids filter (same w3id form as the ESRFET path).
+    assert data.resolved_technique_term == "https://w3id.org/PaN/ESRFET#XAS"
     assert data.mapping_warning is None
     # Both 1001 and 1002 carry the XAS technique PID in FAKE_DATASETS.
     assert len(data.matched_datasets) == 2
