@@ -14,7 +14,7 @@ classifiers = [
 ]
 name = "nomad-semantic-web-service"
 description = "A tool to query public synchrotron dataset catalogues with semantic OpenAPI annotations."
-version = "0.1.0"
+dynamic = ["version"]
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
