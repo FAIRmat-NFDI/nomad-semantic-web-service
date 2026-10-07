@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 title: 'nomad-semantic-web-service: A NOMAD plugin for semantic search and extraction of public synchrotron dataset records'
-version: 0.1.0
+version: 0.1.1
 message:
   If you use this software, please cite it using the
   metadata from this file.
