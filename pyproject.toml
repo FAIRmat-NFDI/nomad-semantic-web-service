@@ -41,6 +41,20 @@ Repository = "https://github.com/FAIRmat-NFDI/nomad-semantic-web-service"
 nexus = [
     "pynxtools-xas>=0.1.1",
 ]
+# ewoks/est EXAFS workflow stack used by the OSCARS XAS demonstrator example
+# upload's notebooks. Installing this extra lets a NORTH Jupyter deployment
+# pre-provision the kernel; otherwise the notebooks' own setup cell
+# pip-installs the same packages at runtime.
+demo = [
+    "pynxtools-xas>=0.1.1",
+    "est",
+    "ewoks",
+    "ewoksorange",
+    "PyMca5",
+    "PyQt5",
+    "Orange3",
+    "jupyterlab-h5web",
+]
 dev = [
     "ruff",
     "pytest",
@@ -56,6 +70,7 @@ dev = [
 schema_package_entry_point = "nomad_semantic_web_service.schema_packages:schema_package_entry_point"
 downloaded_dataset_entry_point = "nomad_semantic_web_service.schema_packages:downloaded_dataset_entry_point"
 api_entry_point = "nomad_semantic_web_service.apis:api_entry_point"
+oscars_xas_demo_example_upload = "nomad_semantic_web_service.example_uploads:oscars_xas_demo_example_upload"
 
 
 [tool.uv]
@@ -66,6 +81,9 @@ extra-index-url = [
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
 exclude = [
+    # Bundled example-upload notebooks/scripts: ported reference material,
+    # not this plugin's own library code.
+    "src/nomad_semantic_web_service/example_uploads/oscars_xas_demo/**",
     ".bzr",
     ".direnv",
     ".eggs",
@@ -148,7 +166,10 @@ disable_error_code = "import, import-untyped, annotation-unchecked"
 where = ["src"]
 
 [tool.setuptools.package-data]
-nomad_semantic_web_service = ["ontologies/*.owl"]
+nomad_semantic_web_service = [
+    "ontologies/*.owl",
+    "example_uploads/oscars_xas_demo/*",
+]
 
 [tool.pytest.ini_options]
 addopts = "-m 'not live'"

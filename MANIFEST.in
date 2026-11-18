@@ -1,1 +1,3 @@
 graft src/nomad_semantic_web_service/ontologies
+graft src/nomad_semantic_web_service/example_uploads
+global-exclude __pycache__ *.py[cod]
