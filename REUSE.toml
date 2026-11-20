@@ -45,3 +45,15 @@ path = [
 ]
 SPDX-FileCopyrightText = "The nomad-semantic-web-service Authors"
 SPDX-License-Identifier = "Apache-2.0"
+
+# OSCARS XAS demonstrator example upload: notebooks, README, and upload
+# metadata can't carry an inline header. The two .py helper scripts in this
+# folder do and are not listed here.
+[[annotations]]
+path = [
+  "src/nomad_semantic_web_service/example_uploads/oscars_xas_demo/*.ipynb",
+  "src/nomad_semantic_web_service/example_uploads/oscars_xas_demo/README.md",
+  "src/nomad_semantic_web_service/example_uploads/oscars_xas_demo/nomad.json",
+]
+SPDX-FileCopyrightText = "The nomad-semantic-web-service Authors"
+SPDX-License-Identifier = "Apache-2.0"
